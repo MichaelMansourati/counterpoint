@@ -1,92 +1,100 @@
 (
+~lag = 0.2;
 SynthDef(\simple, {
-	arg freq;
-	// var env = EnvGen.ar(Env.new([0,1,0], [0.1,1], releaseNode:1), doneAction:Done.freeSelf);
-	Out.ar(0, SinOsc.ar(Lag.kr(freq, 0.2)!2));
+	arg freq, phase = 0;
+	phase.postln;
+	Out.ar(0, SinOsc.ar(Lag.kr(freq, 0.2)!2, phase) * 0.2);
 }).add;
 )
 
 
 (
-var fifthBelowOptions, fifthAboveOptions, scale, startNote, voice1, voice2, getStepData, fifthAboveDict;
-TempoClock.default.tempo = 1;
+var dict,
+leaps,
+fsm,
+voice1, voice2, voice3,
+downbeatStep,
+lastDegree,
+fourthDownOptions = [
+	[ [ 0, 1 ], [-3, 0 ] ],
+	[ [ 0, 0.75 ], [ -1, 0.125 ], [ -1, 0.125 ], [ -1,  0] ],
+	// [ [ 0, 0.25 ], [ 1, 0.25 ], [ -1, 0.25 ], [ -1, 0.25 ], [ -1, 0 ] ],
+],
+secondDownOptions =[
+	[ [ 0, 1], [ -1, 0 ] ],
+	// [ [ 0, 0.5 ], [ -1, 0.25 ], [ -1, 0.25 ], [ 1, 0 ] ]
+],
+sustainOptions = [
+	[ [ 0, 1 ], [ 0, 0] ]
+],
+thirdUpOptions = [
+	[ [ 0, 1 ], [ 2, 0 ] ],
+	[ [ 0, 0.5 ], [ 1, 0.5 ], [ 1, 0 ]  ],
+	[ [ 0, 0.75 ], [ 1, 0.25 ], [ 1, 0 ] ],
+	[ [ 0, 0.25 ], [ -1, 0.25 ], [ 1, 0.25 ], [ 1, 0.25 ], [ 1, 0 ] ]
+],
+fifthUpOptions = [
+	[ [ 0, 1 ], [ 4 , 0 ] ],
+	[ [ 0, 0.25 ], [ 1, 0.25 ], [ 1, 0.25 ], [ 1, 0.25 ], [ 1, 0 ] ],
+	// [ [ 0, 0.5 ], [ 2, 0.5 ], [ 2, 0 ] ]
+];
+TempoClock.default.tempo = 0.75;
+s.latency = 0.2;
+downbeatStep = 0;
 
-fifthAboveDict = (
-	-3: [
-		[ [ -3 ], [ 1 ] ],
-		[ [ 0, -1, -1, -1 ], [ 0.5, 0.25, 0.25 ] ],
-		[ [ 0, 1, -1, -1 ], 0.25!4 ],
-		[ [ 0, -1, -1, 1 ], 0.25!4 ]
-	],
-	-1: [
-		[ [ -1 ], [ 1 ] ],
-		[ [ 0, -1, -1, 1 ], [ 0.5, 0.25, 0.25 ] ]
-	],
-	0: [
-		[ [ 0 ], [ 1 ] ]
-	],
-	2: [
-		[ [ 2 ], [ 1 ] ]
-	],
-	4: [
-		[ [ 4 ], [ 1 ] ]
-	]
+dict = [
+	fourthDownOptions,
+	secondDownOptions,
+	sustainOptions,
+	thirdUpOptions,
+	fifthUpOptions
+];
+leaps = (
+	-3: 0,
+	-1: 1,
+	0: 2,
+	2: 3,
+	4: 4
 );
-scale = Scale.major;
-startNote = 0;
+fsm = Pfsm([
+	#[1],
+	Prand(dict[leaps[-3]], 1).flatten(0),
+	(1..4),
+	Prand(dict[leaps[-1]], 1).flatten(0),
+	(0..4),
+	Prand(dict[leaps[0]], 1).flatten(0),
+	(0..4),
+	Prand(dict[leaps[2]], 1).flatten(0),
+	(0..4),
+	Prand(dict[leaps[4]], 1).flatten(0),
+	(0..2)
+]);
 
-getStepData = {
-	arg e;
-	var interval = fifthAboveOptions.choose;
-
-
-};
-
+lastDegree = 0;
 voice1 = Pdef(\voice,
 	Pmono(
 		\simple,
-		\stepData, Pfunc({fifthAboveDict.choose.choose.flop }).flatten(0),
-		\degree, Pseries(0, Pkey(\stepData).collect({|e| e[0]}), inf),
+		\stepData, fsm,
+		\stepVelocity, Pkey(\stepData).collect({|e| e[0]}),
+		\degree, Pfunc({|event| event[\stepVelocity] + lastDegree}),
 		\dur, Pkey(\stepData).collect({|e| e[1]}),
 		\sustain, Pkey(\stepData).collect({|e| e[1]}),
-		\scale, scale,
-		\octave, 4,
-		\root, 0
+		\scale, Scale.major,
+		\octave, 5,
+		\root, 0,
+		\phase, 0,
+		\callback, {|event| lastDegree = event[\degree] }
 	)
 ).collect({ |e|
 	~lastVoiceEvent = e;
-	// e.asStream[\degree].postln;
 }).play(quant: Quant(1));
+
 voice2 = Pbindf(
 	Pdef(\voice),
-	\degree, Pfunc { ~lastVoiceEvent.asStream[\degree] + 4},
+	\degree, Pfunc({ ~lastVoiceEvent.asStream[\degree] + 4}),
 	\dur, Pfunc { ~lastVoiceEvent.asStream[\dur] },
 	\sustain, Pfunc { ~lastVoiceEvent.asStream[\sustain] },
+	\phase, 1pi,
+	\callback, {}
 ).play(quant: Quant(1, timingOffset: 1));
 )
-
-
-var fifthAboveDict = (
-	-3: [
-		[[-3], [1]],
-		[[0, -1, -1, -1], [0.5, 0.25, 0.25]],
-		[[0, 1, -1, -1],0.25!4],
-		[[0, -1, -1, 1],0.25!4]
-	],
-	-1: [
-		[[-1], [1]],
-		[[0, -1, -1, 1], [0.5,0.25, 0.25]]
-	],
-	0: [
-		[[0],[1]]
-	],
-	2: [
-		[[2],[1]]
-	],
-	4: [
-		[[4],[1]]
-	]
-).choose.choose.flop.postln;
-
-
-
