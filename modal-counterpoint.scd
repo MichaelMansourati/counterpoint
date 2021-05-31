@@ -1,27 +1,35 @@
 (
 ~lag = 0.2;
 SynthDef(\simple, {
-	arg freq, phase = 0;
-	phase.postln;
-	Out.ar(0, SinOsc.ar(Lag.kr(freq, 0.2)!2, phase) * 0.2);
+	arg freq = 100, i_pan = 0, gate = 1, amp = 1;
+	var sig, env;
+	env = EnvGen.ar(Env([0, 0.5, 0], [0.2, 1], releaseNode: 1), gate: gate, doneAction: Done.freeSelf);
+	sig = Lag.kr(freq, 0.2);
+	sig = SinOsc.ar(sig) * 0.5;
+	sig = Pan2.ar(sig, i_pan, 1) * env;
+	sig = sig * amp;
+	Out.ar(0, sig);
 }).add;
 )
 
 
 (
-var dict,
-leaps,
-fsm,
+var leaps,
+scale, root,
+fsm, dfsm,
 voice1, voice2, voice3,
-downbeatStep,
-lastDegree,
+getMelodyForState,
+cadenceMelody, cadenceMelodyVoice2,
+lastDegree, lastDegreeVoice2,
+lastStep,
+isCadenceStarted, checkCadence,
 fourthDownOptions = [
 	[ [ 0, 1 ], [-3, 0 ] ],
 	[ [ 0, 0.75 ], [ -1, 0.125 ], [ -1, 0.125 ], [ -1,  0] ],
 	// [ [ 0, 0.25 ], [ 1, 0.25 ], [ -1, 0.25 ], [ -1, 0.25 ], [ -1, 0 ] ],
 ],
-secondDownOptions =[
-	[ [ 0, 1], [ -1, 0 ] ],
+secondDownOptions = [
+	[ [ 0, 1 ], [ -1, 0 ] ],
 	// [ [ 0, 0.5 ], [ -1, 0.25 ], [ -1, 0.25 ], [ 1, 0 ] ]
 ],
 sustainOptions = [
@@ -37,64 +45,95 @@ fifthUpOptions = [
 	[ [ 0, 1 ], [ 4 , 0 ] ],
 	[ [ 0, 0.25 ], [ 1, 0.25 ], [ 1, 0.25 ], [ 1, 0.25 ], [ 1, 0 ] ],
 	// [ [ 0, 0.5 ], [ 2, 0.5 ], [ 2, 0 ] ]
+],
+cadenceOptions = [
+	[ [ 0, 0.01 ], [ 0, 0.49 ], [ 3, 1 ], [ -1, 0.5 ], [ 1, 2 ] ]
 ];
+
 TempoClock.default.tempo = 0.75;
 s.latency = 0.2;
-downbeatStep = 0;
 
-dict = [
-	fourthDownOptions,
-	secondDownOptions,
-	sustainOptions,
-	thirdUpOptions,
-	fifthUpOptions
-];
 leaps = (
-	-3: 0,
-	-1: 1,
-	0: 2,
-	2: 3,
-	4: 4
+	-3: fourthDownOptions,
+	-1: secondDownOptions,
+	0: sustainOptions,
+	2: thirdUpOptions,
+	4: fifthUpOptions,
+	3: cadenceOptions
 );
+root = 0;
+lastDegree = 0;
+lastDegreeVoice2 = lastDegree + 4;
+lastStep = 0;
+getMelodyForState = { |int|
+	var ornamentOptions = leaps[int];
+	lastStep = int;
+	ornamentOptions.choose;
+};
+
 fsm = Pfsm([
 	#[1],
-	Prand(dict[leaps[-3]], 1).flatten(0),
+	Pseq(getMelodyForState.value(-3)),
 	(1..4),
-	Prand(dict[leaps[-1]], 1).flatten(0),
+	Pseq(getMelodyForState.value(-1)),
+	(0..5),
+	Pseq(getMelodyForState.value(0)),
 	(0..4),
-	Prand(dict[leaps[0]], 1).flatten(0),
+	Pseq(getMelodyForState.value(2)),
 	(0..4),
-	Prand(dict[leaps[2]], 1).flatten(0),
-	(0..4),
-	Prand(dict[leaps[4]], 1).flatten(0),
-	(0..2)
-]);
+	Pseq(getMelodyForState.value(4)),
+	(0..2),
+	Pseq(getMelodyForState.value(3)),
+	[6],
+	nil, nil
+]).trace;
 
-lastDegree = 0;
+scale = Scale.major;
+scale.tuning = \et12;
+
 voice1 = Pdef(\voice,
-	Pmono(
-		\simple,
+	Pmono(\simple,
 		\stepData, fsm,
 		\stepVelocity, Pkey(\stepData).collect({|e| e[0]}),
 		\degree, Pfunc({|event| event[\stepVelocity] + lastDegree}),
 		\dur, Pkey(\stepData).collect({|e| e[1]}),
-		\sustain, Pkey(\stepData).collect({|e| e[1]}),
-		\scale, Scale.major,
-		\octave, 5,
-		\root, 0,
-		\phase, 0,
-		\callback, {|event| lastDegree = event[\degree] }
+		\scale, scale,
+		\octave, 4,
+		\root, root,
+		\pan, -0.5,
+		\gate, 1,
+		\amp, 1,
+		\callback, {|event|
+			lastDegree = event[\degree];
+		}
 	)
 ).collect({ |e|
 	~lastVoiceEvent = e;
 }).play(quant: Quant(1));
 
+isCadenceStarted = false;
+checkCadence = {
+	if (isCadenceStarted,
+		{},
+		{ isCadenceStarted = ~lastVoiceEvent.asStream[\stepData] == [ 0, 0.01 ]; }
+	);
+	isCadenceStarted;
+};
+cadenceMelodyVoice2 = Pseq([ [ 0, 1 ], [ -1, 2 ], [ 0, 0 ], [ 0, 0 ], [ 0, 0 ], [ 0, 0 ] ], 1);
+
 voice2 = Pbindf(
 	Pdef(\voice),
-	\degree, Pfunc({ ~lastVoiceEvent.asStream[\degree] + 4}),
-	\dur, Pfunc { ~lastVoiceEvent.asStream[\dur] },
-	\sustain, Pfunc { ~lastVoiceEvent.asStream[\sustain] },
-	\phase, 1pi,
-	\callback, {}
+	\stepData, Pif(
+		Pfunc(checkCadence),
+		cadenceMelodyVoice2,
+		Pfunc({~lastVoiceEvent.asStream[\stepData]})
+	),
+	\degree, Pkey(\stepData).collect({|e| e[0] + lastDegreeVoice2}),
+	\dur, Pkey(\stepData).collect({|e| e[1]}),
+	\pan, 0.5,
+	\amp, 1,
+	\callback, {|event|
+		lastDegreeVoice2 = event[\degree];
+	}
 ).play(quant: Quant(1, timingOffset: 1));
 )
