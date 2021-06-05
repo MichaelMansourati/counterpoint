@@ -16,7 +16,7 @@ SynthDef(\simple, {
 (
 var leaps,
 scale, root,
-fsm, fsmLobby,
+fsm, fsmLobby, melodyArrayIndex,
 voice1, voice2, voice3,
 getMelodyForState,
 cadenceMelody, cadenceMelodyVoice2,
@@ -72,7 +72,7 @@ getMelodyForState = { |int|
 };
 
 fsm = Pfsm([
-	#[2],
+	(0..4),
 	Pfuncn(getMelodyForState.value(-3)), (1..4),
 	Pfuncn(getMelodyForState.value(-1)), (0..5),
 	Pfuncn(getMelodyForState.value( 0)), (0..4),
@@ -88,12 +88,13 @@ fsmLobby = fsm.next;
 scale = Scale.major;
 scale.tuning = \et12;
 
+melodyArrayIndex = 0;
+
 voice1 = Pdef(\voice,
 	Pmono(\simple,
 		\stepData, Pfunc({
-			if((fsmLobby.size == 1),{fsmLobby = fsmLobby ++ fsm.next}, {});
-			fsmLobby[0];
-		}).trace,
+			fsmLobby[melodyArrayIndex];
+		}),
 		\stepVelocity, Pkey(\stepData).collect({|e| e[0]}),
 		\degree, Pfunc({|event| event[\stepVelocity] + lastDegree}),
 		\dur, Pkey(\stepData).collect({|e| e[1]}),
@@ -105,7 +106,11 @@ voice1 = Pdef(\voice,
 		\amp, 1,
 		\callback, {|event|
 			lastDegree = event[\degree];
-			fsmLobby.removeAt(0);
+			melodyArrayIndex = melodyArrayIndex + 1;
+			if(
+				(fsmLobby.size - melodyArrayIndex <= 2),
+				{fsmLobby = fsmLobby ++ fsm.next}, {}
+			);
 		}
 	)
 ).collect({ |e|
@@ -114,32 +119,26 @@ voice1 = Pdef(\voice,
 
 isCadenceStarted = false;
 checkCadence = {
-	"-----".postln;
-	~lastVoiceEvent.asStream[\stepData].postln;
-	~lastVoiceEvent.asStream[\stepData].postln;
-	~lastVoiceEvent.asStream[\stepData].postln;
-	~lastVoiceEvent.asStream[\stepData].postln;
-	"-----".postln;
 	if (isCadenceStarted,
 		{},
 		{ isCadenceStarted = ~lastVoiceEvent.asStream[\stepData] == [ 0, 0.01 ]; }
 	);
 	isCadenceStarted;
 };
-cadenceMelodyVoice2 = Pseq([ [ 0, 1 ], [ -1, 2 ], [ 0, 0 ], [ 0, 0 ], [ 0, 0 ], [ 0, 0 ] ], 1);
+cadenceMelodyVoice2 = Pseq([
+	[ 0, 1 ], [ -1, 2 ], [ 0, 0 ], [ 0, 0 ], [ 0, 0 ], [ 0, 0 ]
+], 1);
 
 voice2 = Pbindf(
 	Pdef(\voice),
-	\stepData, ({}),
-	\stepDataVoice2, Pif(
+	\stepData, Pif(
 		Pfunc(checkCadence),
 		cadenceMelodyVoice2,
-		// Pkey(\stepData)
 		Pfunc({~lastVoiceEvent.asStream[\stepData]})
-	),
-	\stepVelocity, Pkey(\stepDataVoice2).collect({|e| e[0]}),
-	\degree, Pkey(\stepDataVoice2).collect({|e| e[0] + lastDegreeVoice2}),
-	\dur, Pkey(\stepDataVoice2).collect({|e| e[1]}),
+	).trace,
+	\stepVelocity, Pkey(\stepData).collect({|e| e[0]}),
+	\degree, Pkey(\stepData).collect({|e| e[0] + lastDegreeVoice2}),
+	\dur, Pkey(\stepData).collect({|e| e[1]}),
 	\pan, 0.5,
 	\amp, 1,
 	\callback, {|event|
@@ -150,3 +149,4 @@ voice2 = Pbindf(
 
 
 
+[4, 5, 6, 7, 8, 4, 5, 6, 7, 8].maxSize;
