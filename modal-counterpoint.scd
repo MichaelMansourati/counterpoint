@@ -146,7 +146,3 @@ voice2 = Pbindf(
 	}
 ).play(quant: Quant(1, timingOffset: 1));
 )
-
-
-
-[4, 5, 6, 7, 8, 4, 5, 6, 7, 8].maxSize;
