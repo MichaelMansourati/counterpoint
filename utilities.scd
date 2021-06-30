@@ -36,9 +36,13 @@ leaps = (
 ~setup = {
 	~root = (0..6).choose;
 	~lastDegreeVoice1 = (0..6).choose;
-	~lastDegreeVoice2Duet = ~lastDegreeVoice1 + 4;
-	~lastDegreeVoice2 = ~lastDegreeVoice1 - 7;
+	~lastDegreeVoice2 = ~lastDegreeVoice1 + 4;
 	~lastDegreeVoice3 = ~lastDegreeVoice1 - 3;
+	~cadenceMelodyVoice2 = Pseq([ [ 0, 1 ], [ -1, 2 ] ], 1).asStream;
+	~cadenceMelodyVoice3 = Pseq([ [ 0, 1 ], [ -3, 1 ], [ 3, 2 ] ], 1).asStream;
+	~quantVoice1 =  Quant(1, timingOffset: 0);
+	~quantVoice2 = Quant(1, timingOffset: 1);
+	~quantVoice3 = Quant(1, timingOffset: 2);
 	isCadenceStarted = false;
 	lastStep = 0;
 };
@@ -82,12 +86,5 @@ SynthDef(\reverb, {
 	sig = FreeVerb.ar(sig, 0.2, 0.9);
 	Out.ar(0, sig);
 }).add;
-
-~quantVoice1 =  Quant(1, timingOffset: 0);
-~quantVoice2 = Quant(1, timingOffset: 1);
-~quantVoice3 = Quant(1, timingOffset: 2);
-
-~cadenceMelodyVoice2 = Pseq([ [ 0, 1 ], [ -1, 2 ] ], 1);
-~cadenceMelodyVoice3 = Pseq([ [ 0, 1 ], [ -3, 1 ], [ 3, 2 ] ], 1);
 
 )
