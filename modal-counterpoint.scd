@@ -61,7 +61,7 @@ melodyArrayIndex = 0;
 	\pan, 0.5,
 	\amp, 1,
 	\callback, {|event|
-		topEnvironment[\lastDegreeVoice2Duet] = event[\degree];
+		topEnvironment[\lastDegreeVoice2] = event[\degree];
 	}
 ).play(quant: ~quantVoice2);
 
