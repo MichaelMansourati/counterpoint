@@ -3,19 +3,21 @@
 (
 var fsm, fsmLobby, melodyArrayIndex;
 ~setup.value;
+~quantVoice2.timingOffset = 1;
+~quantVoice3.timingOffset = 2;
 
 Synth(\reverb);
 
 fsm = Pfsm([
-	[ 0, 2, 3, 4 ],
-	// [ 3 ], //cadence testing
+	// [ 0, 2, 3, 4 ],
+	[ 3 ], //cadence testing
 	Pfuncn({ ~getMelodyForState.value(-3).choose; }), [ 2, 3, 4 ],
 	Pfuncn({ ~getMelodyForState.value(-1).choose; }), [ 5 ],
 	Pfuncn({ ~getMelodyForState.value( 0).choose; }), [ 0, 3, 4 ],
-	Pfuncn({ ~getMelodyForState.value( 2).choose; }), [ 0, 2, 3, 4 ],
-	// Pfuncn({ ~getMelodyForState.value( 2).choose; }), [ 1 ], //cadence testing
+	// Pfuncn({ ~getMelodyForState.value( 2).choose; }), [ 0, 2, 3, 4 ],
+	Pfuncn({ ~getMelodyForState.value( 2).choose; }), [ 1 ], //cadence testing
 	Pfuncn({ ~getMelodyForState.value( 4).choose; }), [ 0, 2 ],
-	// Pfuncn({ ~getMelodyForState.value( 3).choose; }), [ 6 ],
+	Pfuncn({ ~getMelodyForState.value( 3).choose; }), [ 6 ],
 	nil, nil
 ]).asStream;
 
@@ -26,10 +28,10 @@ melodyArrayIndex = 0;
 	Pmono(\simple,
 		\stepData, Pfunc({ fsmLobby[melodyArrayIndex] }),
 		\stepVelocity, Pkey(\stepData).collect({|e| e[0]}),
-		\degree, Pfunc({|event| event[\stepVelocity] + topEnvironment[\lastDegreeVoice1].postln}),
+		\degree, Pfunc({|event| event[\stepVelocity] + topEnvironment[\lastDegreeVoice1]}),
 		\dur, Pkey(\stepData).collect({|e| e[1]}),
 		\scale, ~scale,
-		\octave, 5,
+		\octave, 4,
 		\root, ~root,
 		\pan, -0.5,
 		\gate, 1,
@@ -52,7 +54,7 @@ melodyArrayIndex = 0;
 	Pdef(\voice),
 	\stepData, Pif(
 		Pfunc(topEnvironment[\checkCadence]),
-		topEnvironment[\cadenceMelodyVoice2],
+		Pfunc({ topEnvironment[\cadenceMelodyVoice2].next }),
 		Pfunc({topEnvironment[\lastVoiceEvent].asStream[\stepData]})
 	),
 	\stepVelocity, Pkey(\stepData).collect({|e| e[0]}),
@@ -69,9 +71,9 @@ melodyArrayIndex = 0;
 	Pdef(\voice),
 	\stepData, Pif(
 		Pfunc(topEnvironment[\checkCadence]),
-		Pfunc({ ~quantVoice3.timingOffset = 0; topEnvironment[\cadenceMelodyVoice3] }),
-		Pfunc({topEnvironment[\lastVoiceEvent].asStream[\stepData]})
-	),
+		Pfunc({ topEnvironment[\cadenceMelodyVoice3].next }),
+		Pfunc({ topEnvironment[\lastVoiceEvent].asStream[\stepData] })
+	).trace,
 	\stepVelocity, Pkey(\stepData).collect({|e| e[0]}),
 	\degree, Pkey(\stepData).collect({|e| e[0] + topEnvironment[\lastDegreeVoice3]}),
 	\dur, Pkey(\stepData).collect({|e| e[1]}),
@@ -82,3 +84,5 @@ melodyArrayIndex = 0;
 	}
 ).play(quant: ~quantVoice3);
 )
+
+~quantVoice3.phase = -1;
