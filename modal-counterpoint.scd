@@ -56,7 +56,7 @@ melodyArrayIndex = 0;
 		Pfunc({~lastVoiceEvent.asStream[\stepData]})
 	),
 	\stepVelocity, Pkey(\stepData).collect({|e| e[0]}),
-	\degree, Pkey(\stepData).collect({|e| e[0] + topEnvironment[\lastDegreeVoice2Duet]}),
+	\degree, Pkey(\stepData).collect({|e| e[0] + topEnvironment[\lastDegreeVoice2]}),
 	\dur, Pkey(\stepData).collect({|e| e[1]}),
 	\pan, 0.5,
 	\amp, 1,
