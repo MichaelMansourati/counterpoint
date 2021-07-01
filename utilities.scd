@@ -33,6 +33,7 @@ leaps = (
 	3: cadenceOptions
 );
 
+~scale = Scale.major;
 ~setup = {
 	~root = (0..6).choose;
 	~lastDegreeVoice1 = (0..6).choose;
