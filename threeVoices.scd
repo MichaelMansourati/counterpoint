@@ -2,19 +2,17 @@
 
 (
 var fsm, fsmLobby, melodyArrayIndex;
-~setup.value;
-~quantVoice2.timingOffset = 1;
-~quantVoice3.timingOffset = 2;
+~setup.value();
 
 Synth(\reverb);
 
 fsm = Pfsm([
-	// [ 0, 2, 3, 4 ],
-	[ 3 ], //cadence testing
+	[ 0, 2, 3, 4 ],
+	// [ 3 ], //cadence testing
 	Pfuncn({ ~getMelodyForState.value(-3).choose; }), [ 2, 3, 4 ],
 	Pfuncn({ ~getMelodyForState.value(-1).choose; }), [ 5 ],
 	Pfuncn({ ~getMelodyForState.value( 0).choose; }), [ 0, 3, 4 ],
-	// Pfuncn({ ~getMelodyForState.value( 2).choose; }), [ 0, 2, 3, 4 ],
+	// Pfuncn({ ~getMelodyForState.value( 2).choose; }), [ 0, 1, 2, 3, 4 ],
 	Pfuncn({ ~getMelodyForState.value( 2).choose; }), [ 1 ], //cadence testing
 	Pfuncn({ ~getMelodyForState.value( 4).choose; }), [ 0, 2 ],
 	Pfuncn({ ~getMelodyForState.value( 3).choose; }), [ 6 ],
@@ -66,10 +64,12 @@ melodyArrayIndex = 0;
 	~voice1Off
 ]);
 
-~voice1.collect({ |e|
-	~lastVoiceEvent = e;
+~voice1.collect({ |event|
+	~checkCadence.value(event);
+	~lastVoiceEvent = event;
+	event.asStream[\stepData].postln;
+	event;
 }).play(quant: ~quantVoice1);
-
 
 ~voice2Create = Pbindf(
 	Pdef(\voiceCreate),
@@ -79,7 +79,7 @@ melodyArrayIndex = 0;
 	Pdef(\voiceSet),
 	\id, ~voice2NodeID,
 	\stepData, Pif(
-		Pfunc(topEnvironment[\checkCadence]),
+		Pfunc({ ~isCadenceStarted }),
 		Pfunc({ topEnvironment[\cadenceMelodyVoice2].next }),
 		Pfunc({topEnvironment[\lastVoiceEvent].asStream[\stepData]})
 	),
@@ -100,14 +100,29 @@ melodyArrayIndex = 0;
 
 
 ~voice3Create = Pbindf(Pdef(\voiceCreate), \id, ~voice3NodeID = s.nextNodeID);
-~voice3Set = Pbindf(
-	Pdef(\voiceSet),
+~voice3Set = PatternProxy(
+	Pbindf(Pdef(\voiceSet),
+		\id, ~voice3NodeID,
+		\stepData, Pif(
+			Pfunc({ ~isCadenceStarted }),
+			Pfunc({ }),
+			Pfunc({ topEnvironment[\lastVoiceEvent].asStream[\stepData] })
+		),
+		\timingOffset, 2,
+		\stepVelocity, Pkey(\stepData).collect({|e| e[0]}),
+		\degree, Pkey(\stepData).collect({|e| e[0] + topEnvironment[\lastDegreeVoice3]}),
+		\dur, Pkey(\stepData).collect({|e| e[1]}),
+		\pan, 0.5,
+		\amp, 1,
+		\callback, {|event|
+			topEnvironment[\lastDegreeVoice3] = event[\degree];
+		}
+	)
+);
+~voice3SetCadence = Pbindf(Pdef(\voiceSet),
 	\id, ~voice3NodeID,
-	\stepData, Pif(
-		Pfunc(topEnvironment[\checkCadence]),
-		Pfunc({ topEnvironment[\cadenceMelodyVoice3].next }),
-		Pfunc({ topEnvironment[\lastVoiceEvent].asStream[\stepData] })
-	),
+	\stepData, Pfunc({ topEnvironment[\cadenceMelodyVoice3].next }),
+	\timingOffset, 0,
 	\stepVelocity, Pkey(\stepData).collect({|e| e[0]}),
 	\degree, Pkey(\stepData).collect({|e| e[0] + topEnvironment[\lastDegreeVoice3]}),
 	\dur, Pkey(\stepData).collect({|e| e[1]}),
@@ -120,8 +135,7 @@ melodyArrayIndex = 0;
 ~voice3Off = Pbindf(Pdef(\voiceOff), \id, ~voice3NodeID);
 ~voice3 = Pseq([
 	Ppar([~voice3Create, ~voice3Set], 1),
+	~voice3SetCadence,
 	~voice3Off
 ]).play(quant: ~quantVoice3);
 )
-
-~quantVoice3.phase = -1;

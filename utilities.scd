@@ -40,11 +40,12 @@ leaps = (
 	~lastDegreeVoice2 = ~lastDegreeVoice1 + 4;
 	~lastDegreeVoice3 = ~lastDegreeVoice1 - 3;
 	~cadenceMelodyVoice2 = Pseq([ [ 0, 1 ], [ -1, 2 ] ], 1).asStream;
-	~cadenceMelodyVoice3 = Pseq([ [ 0, 1 ], [ -3, 1 ], [ 3, 2 ] ], 1).asStream;
-	~quantVoice1 =  Quant(1, timingOffset: 0);
-	~quantVoice2 = Quant(1, timingOffset: 1);
-	~quantVoice3 = Quant(1, timingOffset: 2);
-	isCadenceStarted = false;
+	~cadenceMelodyVoice3 = Pseq([ [ -1, 1 ], [ -3, 1 ], [ 3, 2 ] ], 1).asStream;
+	~quantVoice1 =  Quant(1, 0, 0);
+	~quantVoice2 = Quant(1, 0, 1);
+	~quantVoice3 = Quant(1, 0, 2);
+	~eventHistory = [];
+	~isCadenceStarted = false;
 	lastStep = 0;
 };
 
@@ -57,12 +58,15 @@ leaps = (
 	ornamentOptions;
 };
 
-~checkCadence = {
-	if (isCadenceStarted,
-		{},
-		{ isCadenceStarted = ~lastVoiceEvent.asStream[\stepData] == [ 0, 0.01 ]; }
+~checkCadence = { |event|
+	if (~isCadenceStarted,
+		{  },
+		{
+			~isCadenceStarted = event.asStream[\stepData] == [ 0, 0.01 ];
+			if(~isCadenceStarted, {
+				~voice3Set.source = ~voice3SetCadence.postln }, {});
+		}
 	);
-	isCadenceStarted;
 };
 
 TempoClock.default.tempo = 0.75;
