@@ -55,6 +55,20 @@ var getNtvlOpts = {
 	ntvlOpts;
 };
 
+var degree = (0..5).choose;
+var root= (0..6).choose;
+var octave = 5;
+var note = octave*12 + root+ Scale.major.at(degree);
+var trackMidiNumber = {
+	arg ntvl;
+	ntvl.postln;
+	if (ntvl.isKindOf(Number), {
+		if (ntvl < 0,
+			{note = note - Scale.major.at(ntvl.abs)},
+			{note = note + Scale.major.at(ntvl.abs)}
+		)
+	});
+};
 var beatCreator = {
 	while( {
 		beatNtvls.size < 40 and: { beatNtvls[beatNtvls.size - 1] !== \cadence };
@@ -62,10 +76,14 @@ var beatCreator = {
 		var ntvlOpts = getNtvlOpts.value();
 		if (beatNtvls.size > 15 and: { ntvlOpts.find([2]) !== nil },
 			{ beatNtvls = beatNtvls.addAll([2, -1, \cadence]); },
-			{ beatNtvls = beatNtvls.add(ntvlOpts.choose) }
+			{
+				var chosenNtvl = ntvlOpts.choose;
+				beatNtvls = beatNtvls.add(chosenNtvl);
+				trackMidiNumber.value(chosenNtvl);
+			}
 		);
 	});
-	beatNtvls;
+	beatNtvls.postln;
 };
 
 var melodyCreator = { arg beats = [];
@@ -84,61 +102,40 @@ var melodyAdjuster = { arg melody = [], voiceNum = 1;
 	melody = melody.add(~leaps[('cadence'++voiceNum).asSymbol].choose);
 	melody.flatten;
 };
-var melody = melodyCreator.value(beatCreator.value.postln);
-var melodyVoice1 = melodyAdjuster.value(melody, 1);
-var melodyVoice2 = melodyAdjuster.value(melody, 2);
-var melodyVoice3 = melodyAdjuster.value(melody, 3);
-var voice1, voice2, voice3;
-Synth(\reverb);
-~root = (0..6).choose;
-~lastDegreeVoice1 = (0..6).choose;
+var melody = melodyCreator.value(beatCreator.value);
+var createVoice, voice1, voice2, voice3,voice1MidiNote; //max number for voice1MidiNote should be 70, min should be 46 (2 octaves)
+
+
+~lastDegreeVoice1 = degree;
 ~lastDegreeVoice2 = ~lastDegreeVoice1 + 4;
 ~lastDegreeVoice3 = ~lastDegreeVoice1 - 3;
-~quantVoice1 =  Quant(1, 0, 0);
-~quantVoice2 = Quant(1, 0, 1);
-~quantVoice3 = Quant(1, 0, 2);
-Pdef(\voice,
+Synth(\reverb);
+
+createVoice = {
+	arg voiceNum = 1, totalVoices = 3;
+	var stepData = Pseq(melodyAdjuster.value(melody, voiceNum), 1);
+	var pan = (voiceNum - 1)/(totalVoices - 1) - 0.5;
 	Pmono(
 		\simple,
-		\stepData, Pseq(melodyVoice1, 1),
+		\stepData, stepData,
 		\stepVelocity, Pkey(\stepData).collect({|e| e[0]}),
-		\degree, Pfunc({|event| event[\stepVelocity] + topEnvironment[\lastDegreeVoice1]}),
+		\degree, Pfunc({|event| event[\stepVelocity] + topEnvironment[('lastDegreeVoice'++voiceNum).asSymbol]}),
 		\dur, Pkey(\stepData).collect({|e| e[1]}),
-		\scale, ~scale,
-		\octave, 4,
-		\root, ~root,
-		\pan, -0.5,
+		\scale, Scale.major,
+		\octave, octave,
+		\root, root,
+		\pan, pan,
 		\gate, 1,
 		\amp, 1,
 		\callback, {|event|
-			topEnvironment[\lastDegreeVoice1] = event[\degree];
+			topEnvironment[('lastDegreeVoice'++voiceNum).asSymbol] = event[\degree];
 		}
-	)
-);
+	).play(quant: Quant(1, 0, voiceNum - 1));
+};
 
-voice1 = Pbindf(Pdef(\voice)).play(quant: ~quantVoice1);
-
-voice2 = Pbindf(
-	Pdef(\voice),
-	\stepData, Pseq(melodyVoice2, 1),
-	\stepVelocity, Pkey(\stepData).collect({|e| e[0]}),
-	\degree, Pfunc({|event| event[\stepVelocity] + topEnvironment[\lastDegreeVoice2]}),
-	\dur, Pkey(\stepData).collect({|e| e[1]}),
-	\pan, 0,
-	\callback, {|event|
-		topEnvironment[\lastDegreeVoice2] = event[\degree];
-	}
-).play(quant: ~quantVoice2);
-
-voice3 = Pbindf(
-	Pdef(\voice),
-	\stepData, Pseq(melodyVoice3, 1),
-	\stepVelocity, Pkey(\stepData).collect({|e| e[0]}),
-	\degree, Pfunc({|event| event[\stepVelocity] + topEnvironment[\lastDegreeVoice3]}),
-	\dur, Pkey(\stepData).collect({|e| e[1]}),
-	\pan, 0.5,
-	\callback, {|event|
-		topEnvironment[\lastDegreeVoice3] = event[\degree];
-	}
-).play(quant: ~quantVoice3);
+voice1 = createVoice.value(1);
+voice2 = createVoice.value(2);
+voice3 = createVoice.value(3);
 )
+
+{ SinOsc.ar(52.midicps) * 0.2 }.play;
