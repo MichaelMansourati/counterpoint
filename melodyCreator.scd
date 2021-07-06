@@ -69,6 +69,9 @@ var trackMidiNumber = {
 		)
 	});
 };
+
+//TODO: max number for voice1MidiNote should be 70, min should be 46 (2 octaves)
+
 var beatCreator = {
 	while( {
 		beatNtvls.size < 40 and: { beatNtvls[beatNtvls.size - 1] !== \cadence };
@@ -103,7 +106,7 @@ var melodyAdjuster = { arg melody = [], voiceNum = 1;
 	melody.flatten;
 };
 var melody = melodyCreator.value(beatCreator.value);
-var createVoice, voice1, voice2, voice3,voice1MidiNote; //max number for voice1MidiNote should be 70, min should be 46 (2 octaves)
+var createVoice, voice1, voice2, voice3,voice1MidiNote;
 
 
 ~lastDegreeVoice1 = degree;
@@ -137,5 +140,3 @@ voice1 = createVoice.value(1);
 voice2 = createVoice.value(2);
 voice3 = createVoice.value(3);
 )
-
-{ SinOsc.ar(52.midicps) * 0.2 }.play;
