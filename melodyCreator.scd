@@ -44,7 +44,8 @@ var getNtvlOpts = {
 		{ ntvlOpts = ntvlOpts.add(2) }
 	);
 	// fifth up
-	if (isPrereqLastNtvlPresent.value([ -3, 0, 2 ]), {
+	if (isPrereqLastNtvlPresent.value([ -3, 0, 2 ])and:
+		{ isLastNtvlsMatching.value([-3, 4, -3]) !== true }, {
 		ntvlOpts = ntvlOpts.add(4)
 	});
 	//cadence
