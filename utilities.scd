@@ -74,7 +74,7 @@ s.latency = 0.2;
 
 bus.free;
 bus = Bus.audio(s, 2);
-lag = 0.1;
+lag = 0.05;
 SynthDef(\simple, {
 	arg freq = 100, i_pan = 0, gate = 1, amp = 1;
 	var sig, env;
