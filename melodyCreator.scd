@@ -19,7 +19,22 @@ var isLastNtvlsMatching = { arg ntvls = [];
 	);
 };
 
-
+var degree = (0..5).choose;
+var root= (0..6).choose;
+var octave = 5;
+//TODO: max number for midiNumberVoice1 should be 70, min should be 46 (2 octaves)
+var midiNumberVoice1 = octave*12 + root+ Scale.major.at(degree);
+var trackMidiNumber = {
+	arg ntvl;
+	ntvl.postln;
+	if (ntvl.isKindOf(Number), {
+		if (ntvl < 0,
+			{midiNumberVoice1 = midiNumberVoice1 - Scale.major.at(ntvl.abs)},
+			{midiNumberVoice1 = midiNumberVoice1 + Scale.major.at(ntvl.abs)}
+		)
+	});
+	midiNumberVoice1.postln;
+};
 
 var getNtvlOpts = {
 	var ntvlOpts = [];
@@ -40,37 +55,22 @@ var getNtvlOpts = {
 	// third up
 	if (
 		isPrereqLastNtvlPresent.value([ -3, 2, 4 ]) and:
-		{ isLastNtvlsMatching.value([2, 2]) !== true },
+		{ isLastNtvlsMatching.value([2, 2]) !== true }and:
+		{ midiNumberVoice1 < 70 },
 		{ ntvlOpts = ntvlOpts.add(2) }
 	);
 	// fifth up
 	if (isPrereqLastNtvlPresent.value([ -3, 0, 2 ])and:
-		{ isLastNtvlsMatching.value([-3, 4, -3]) !== true }, {
-		ntvlOpts = ntvlOpts.add(4)
-	});
+		{ isLastNtvlsMatching.value([-3, 4, -3]) !== true }and:
+		{ midiNumberVoice1 < 70 },
+		{ ntvlOpts = ntvlOpts.add(4) }
+	);
 	//cadence
 	if (isPrereqLastNtvlPresent.value([-1]), {
 		ntvlOpts = ntvlOpts.add(\cadence)
 	});
 	ntvlOpts;
 };
-
-var degree = (0..5).choose;
-var root= (0..6).choose;
-var octave = 5;
-var note = octave*12 + root+ Scale.major.at(degree);
-var trackMidiNumber = {
-	arg ntvl;
-	ntvl.postln;
-	if (ntvl.isKindOf(Number), {
-		if (ntvl < 0,
-			{note = note - Scale.major.at(ntvl.abs)},
-			{note = note + Scale.major.at(ntvl.abs)}
-		)
-	});
-};
-
-//TODO: max number for voice1MidiNote should be 70, min should be 46 (2 octaves)
 
 var beatCreator = {
 	while( {
@@ -106,7 +106,7 @@ var melodyAdjuster = { arg melody = [], voiceNum = 1;
 	melody.flatten;
 };
 var melody = melodyCreator.value(beatCreator.value);
-var createVoice, voice1, voice2, voice3,voice1MidiNote;
+var createVoice, voice1, voice2, voice3;
 
 
 ~lastDegreeVoice1 = degree;
