@@ -2,7 +2,7 @@
 (thisProcess.nowExecutingPath.dirname+/+"utilities.scd").load;
 
 (
-var beatNtvls = [0];
+var beatNtvls = [[-3, 0, 2, 4].choose];
 var isPrereqLastNtvlPresent = { |prereqNtvls|
 	prereqNtvls.find([
 		beatNtvls[beatNtvls.size - 1]
@@ -22,27 +22,7 @@ var isLastNtvlsNotMatching = { arg ntvls = [];
 var root = 0;
 var degree = (0..5).choose;
 var octave = 4;
-
-var midiNumberVoice1 = (octave*12 + root+ Scale.major.at(degree));
-
-var midiNumberToDegree = {
-	arg midiNumber = 0.0;
-	var semitoneCount = midiNumber % 12;
-	var degree = Scale.major.semitones.find([semitoneCount]);
-	degree;
-};
-
-var trackMidiNumber = {
-	arg ntvl;
-	ntvl;
-	if (ntvl.isKindOf(Number), {
-		if (ntvl < 0,
-			{midiNumberVoice1 = midiNumberVoice1 - Scale.major.at(ntvl.abs)},
-			{midiNumberVoice1 = midiNumberVoice1 + Scale.major.at(ntvl.abs)}
-		)
-	});
-	midiNumberVoice1;
-};
+var netDegrees = octave*7 + beatNtvls[0] + degree;
 
 var getNtvlOpts = {
 	var ntvlOpts = [];
@@ -51,38 +31,28 @@ var getNtvlOpts = {
 		isPrereqLastNtvlPresent.value([ 2, 0, 4 ]) and:
 		{ isLastNtvlsNotMatching.value([-3, 4]) } and:
 		{ isLastNtvlsNotMatching.value([-3, 0]) } and:
-		{ midiNumberVoice1 > 46 },
+		{ netDegrees > 28 },
 		{ ntvlOpts = ntvlOpts.add(-3) }
 	);
-	// second down
-/*	if (isPrereqLastNtvlPresent.value([ 2 ]) and:
-		{ midiNumberVoice1 > 46 },
-		{ ntvlOpts = ntvlOpts.add(-1) }
-	);*/
 	// sustain
-	if (isLastNtvlsNotMatching.value([0, 0]) and:
-		{ isPrereqLastNtvlPresent.value([-1]) !== true }, {
-		ntvlOpts = ntvlOpts.add(0)
-	});
+	if (isLastNtvlsNotMatching.value([0, 0]) /*and:
+		{ isPrereqLastNtvlPresent.value([-1]) !== true }*/,
+		{ ntvlOpts = ntvlOpts.add(0) });
 	// third up
 	if (
 		isPrereqLastNtvlPresent.value([ -3, 0, 2, 4 ]) and:
 		{ isLastNtvlsNotMatching.value([2, 2]) }and:
-		{ midiNumberVoice1 < 70 },
+		{ netDegrees < 42 },
 		{ ntvlOpts = ntvlOpts.add(2) }
 	);
 	// fifth up
 	if (isPrereqLastNtvlPresent.value([ -3, 0, 2 ])and:
 		{ isLastNtvlsNotMatching.value([4, -3]) } and:
 		{ isLastNtvlsNotMatching.value([4, 0]) } and:
-		// { isLastNtvlsNotMatching.value([2, -3]) } and: this might be necessary
-		{ midiNumberVoice1 < 70 },
+		{ isLastNtvlsNotMatching.value([2, -3]) } and:
+		{ netDegrees < 40 },
 		{ ntvlOpts = ntvlOpts.add(4) }
 	);
-	//cadence
-/*	if (isPrereqLastNtvlPresent.value([-1]), {
-		ntvlOpts = ntvlOpts.add(\cadence)
-	});*/
 	ntvlOpts;
 };
 
@@ -92,20 +62,14 @@ var beatCreator = {
 		{ [\cadence, \cadenceRaised ].find([beatNtvls[beatNtvls.size - 1]]) === nil };
 	}, {
 		var ntvlOpts = getNtvlOpts.value();
-		if (beatNtvls.size > 6 and: { ntvlOpts.find([2]) !== nil },
+		var fictaDegree = (netDegrees + 3) % 7;
+		if (beatNtvls.size > 15 and: { ntvlOpts.find([2]) !== nil } and: { [1, 5].find([fictaDegree]) === nil },
 			{
-				var toneToFind;
+				var leadingTone;
 				beatNtvls = beatNtvls.add(2);
-				trackMidiNumber.value(2);
 				beatNtvls = beatNtvls.add(-1);
-				trackMidiNumber.value(-1);
-				"midiNumberVoice1 ".post;
-				midiNumberVoice1.postln;
-				"midiToDegree ".post;
-				midiNumberToDegree.value(midiNumberVoice1).postln;
-				toneToFind = midiNumberToDegree.value(midiNumberVoice1);
-				toneToFind.postln;
-				if ([3,6,7,2].find([toneToFind]) !== nil,
+				fictaDegree.postln;
+				if ([4,3,0].find([fictaDegree]) !== nil, //no cadencing on 5
 					{ beatNtvls = beatNtvls.add(\cadenceRaised) },
 					{ beatNtvls = beatNtvls.add(\cadence) }
 				);
@@ -113,7 +77,8 @@ var beatCreator = {
 			{
 				var chosenNtvl = ntvlOpts.choose;
 				beatNtvls = beatNtvls.add(chosenNtvl);
-				trackMidiNumber.value(chosenNtvl);
+				netDegrees = netDegrees + chosenNtvl;
+				netDegrees.postln;
 			}
 		);
 	});
@@ -157,8 +122,7 @@ createVoice = {
 	arg voiceNum = 1, totalVoices = 3;
 	var stepData = Pseq(melodyAdjuster.value(melody, voiceNum), 1);
 	var pan = (voiceNum - 1)/(totalVoices - 1) - 0.5;
-	Pmono(
-		\simple,
+	Pmono(\simple,
 		\stepData, stepData,
 		\stepVelocity, Pkey(\stepData).collect({|e| e[0]}),
 		\degree, Pfunc({|event| event[\stepVelocity] + topEnvironment[('lastDegreeVoice'++voiceNum).asSymbol]}),
