@@ -1,8 +1,8 @@
 (thisProcess.nowExecutingPath.dirname+/+"melodyCreatorUtilities.scd").load;
-(thisProcess.nowExecutingPath.dirname+/+"utilities.scd").load;
 
 (
-var beatNtvls = [[-3, 0, 2, 4].choose];
+var twoVoicesIntervals = [-3, -1, 0, 2, 4];
+var beatNtvls = [twoVoicesIntervals.choose];
 var isPrereqLastNtvlPresent = { |prereqNtvls|
 	prereqNtvls.find([
 		beatNtvls[beatNtvls.size - 1]
@@ -18,35 +18,37 @@ var isLastNtvlsNotMatching = { arg ntvls = [];
 		{ true }
 	);
 };
-
-var root = 0;
-var degree = (0..5).choose;
-var octave = 4;
-var netDegrees = octave*7 + beatNtvls[0] + degree;
+var root, degree, octave, netDegrees;
 
 var getNtvlOpts = {
 	var ntvlOpts = [];
 	// fourth down
 	if (
-		isPrereqLastNtvlPresent.value([ 2, 0, 4 ]) and:
+		isPrereqLastNtvlPresent.value([ 0, 2, 4 ]) and:
 		{ isLastNtvlsNotMatching.value([-3, 4]) } and:
 		{ isLastNtvlsNotMatching.value([-3, 0]) } and:
 		{ netDegrees > 28 },
 		{ ntvlOpts = ntvlOpts.add(-3) }
 	);
+	// second down
+	if (
+		isPrereqLastNtvlPresent.value([ -3, -1, 0, -2, 4 ]) and:
+		{ netDegrees > 26 },
+		{ ntvlOpts = ntvlOpts.add(-1) }
+	);
 	// sustain
-	if (isLastNtvlsNotMatching.value([0, 0]) /*and:
-		{ isPrereqLastNtvlPresent.value([-1]) !== true }*/,
-		{ ntvlOpts = ntvlOpts.add(0) });
+	if (isPrereqLastNtvlPresent.value([ 0 ]) !== true,
+		{ ntvlOpts = ntvlOpts.add(0) }
+	);
 	// third up
 	if (
-		isPrereqLastNtvlPresent.value([ -3, 0, 2, 4 ]) and:
+		isPrereqLastNtvlPresent.value([ -3, -1, 0, 2, 4 ]) and:
 		{ isLastNtvlsNotMatching.value([2, 2]) }and:
 		{ netDegrees < 42 },
 		{ ntvlOpts = ntvlOpts.add(2) }
 	);
 	// fifth up
-	if (isPrereqLastNtvlPresent.value([ -3, 0, 2 ])and:
+	if (isPrereqLastNtvlPresent.value([ -3, -1, 0 ])and:
 		{ isLastNtvlsNotMatching.value([4, -3]) } and:
 		{ isLastNtvlsNotMatching.value([4, 0]) } and:
 		{ isLastNtvlsNotMatching.value([2, -3]) } and:
@@ -62,14 +64,12 @@ var beatCreator = {
 		{ [\cadence, \cadenceRaised ].find([beatNtvls[beatNtvls.size - 1]]) === nil };
 	}, {
 		var ntvlOpts = getNtvlOpts.value();
-		var fictaDegree = (netDegrees + 3) % 7;
-		if (beatNtvls.size > 15 and: { ntvlOpts.find([2]) !== nil } and: { [1, 5].find([fictaDegree]) === nil },
+		var fictaDegree = (netDegrees + 1) % 7;
+		if (beatNtvls.size > 32 and: { [1, 5].find([fictaDegree]) === nil },
 			{
 				var leadingTone;
-				beatNtvls = beatNtvls.add(2);
 				beatNtvls = beatNtvls.add(-1);
-				fictaDegree.postln;
-				if ([4,3,0].find([fictaDegree]) !== nil, //no cadencing on 5
+				if ([4,3,0].find([fictaDegree]) !== nil,
 					{ beatNtvls = beatNtvls.add(\cadenceRaised) },
 					{ beatNtvls = beatNtvls.add(\cadence) }
 				);
@@ -78,11 +78,11 @@ var beatCreator = {
 				var chosenNtvl = ntvlOpts.choose;
 				beatNtvls = beatNtvls.add(chosenNtvl);
 				netDegrees = netDegrees + chosenNtvl;
-				netDegrees.postln;
+				netDegrees;
 			}
 		);
 	});
-	beatNtvls.postln;
+	beatNtvls;
 };
 
 var melodyCreator = {
@@ -109,37 +109,45 @@ var melodyAdjuster = {
 	);
 	melody.flatten;
 };
-var melody = melodyCreator.value(beatCreator.value);
-var createVoice, voice1, voice2, voice3;
 
+var canonAndPause = {
+	arg voices = 3;
+	var beats, melody, createVoice, voice1, voice2, voice3, beginMass, canonAndPause;
+	beatNtvls = [twoVoicesIntervals.choose];
+	root = 0;
+	degree = (0..5).choose;
+	octave = 4;
+	netDegrees = octave*7 + beatNtvls[0] + degree;
+	beats = beatCreator.value.postln;
+	melody = melodyCreator.value(beats);
 
-~lastDegreeVoice1 = degree;
-~lastDegreeVoice2 = ~lastDegreeVoice1 + 4;
-~lastDegreeVoice3 = ~lastDegreeVoice1 - 3;
-Synth(\reverb);
+	~lastDegreeVoice1 = degree;
+	~lastDegreeVoice2 = ~lastDegreeVoice1 + 4;
+	~lastDegreeVoice3 = ~lastDegreeVoice1 - 3;
 
-createVoice = {
-	arg voiceNum = 1, totalVoices = 3;
-	var stepData = Pseq(melodyAdjuster.value(melody, voiceNum), 1);
-	var pan = (voiceNum - 1)/(totalVoices - 1) - 0.5;
-	Pmono(\simple,
-		\stepData, stepData,
-		\stepVelocity, Pkey(\stepData).collect({|e| e[0]}),
-		\degree, Pfunc({|event| event[\stepVelocity] + topEnvironment[('lastDegreeVoice'++voiceNum).asSymbol]}),
-		\dur, Pkey(\stepData).collect({|e| e[1]}),
-		\scale, Scale.major,
-		\octave, octave,
-		\root, root,
-		\pan, pan,
-		\gate, 1,
-		\amp, 1,
-		\callback, {|event|
-			topEnvironment[('lastDegreeVoice'++voiceNum).asSymbol] = event[\degree];
-		}
-	).play(quant: Quant(1, 0, voiceNum - 1));
+	createVoice = {
+		arg voiceNum = 1, totalVoices = 3;
+		var stepData = Pseq(melodyAdjuster.value(melody, voiceNum), 1);
+		var pan = (voiceNum - 1)/(totalVoices - 1) - 0.5;
+		Pmono(\simple,
+			\stepData, stepData,
+			\stepVelocity, Pkey(\stepData).collect({|e| e[0]}),
+			\degree, Pfunc({|event| event[\stepVelocity] + topEnvironment[('lastDegreeVoice'++voiceNum).asSymbol]}),
+			\dur, Pkey(\stepData).collect({|e| e[1]}),
+			\scale, Scale.major,
+			\octave, octave,
+			\root, root,
+			\pan, pan,
+			\gate, 1,
+			\amp, 1,
+			\callback, {|event|
+				topEnvironment[('lastDegreeVoice'++voiceNum).asSymbol] = event[\degree];
+			}
+		).play(quant: Quant(1, 0, voiceNum - 1));
+	};
+	voices.do({ |i| createVoice.value(i + 1) });
+	((beats.size + 2) * (1/TempoClock.default.tempo)).yield;
 };
-
-voice1 = createVoice.value(1);
-voice2 = createVoice.value(2);
-voice3 = createVoice.value(3);
+Synth(\reverb);
+Task({ { canonAndPause.value(2) }.loop; }).start;
 )
