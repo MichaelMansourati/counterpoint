@@ -36,6 +36,21 @@ cadence2Options = [
 cadence3Options = [
 	[ [ 0, 1 ], [ -3, 1 ], [ 3, 4 ] ]
 ],
+isPrereqLastNtvlPresent = { |prereqNtvls|
+	prereqNtvls.find([
+		~beatNtvls[~beatNtvls.size - 1]
+	]) !== nil;
+},
+isLastNtvlsNotMatching = { arg ntvls = [];
+	if (ntvls.size <= ~beatNtvls.size,
+		{
+			ntvls != ~beatNtvls.slice(
+				((~beatNtvls.size - (ntvls.size))..(~beatNtvls.size - 1))
+			);
+		},
+		{ true }
+	);
+},
 bus, lag;
 ~leaps = (
 	-3: fourthDownOptions,
@@ -50,6 +65,81 @@ bus, lag;
 	\cadence2: cadence2Options,
 	\cadence3: cadence3Options,
 );
+~beatNtvls = [];
+~netDegrees = 0;
+~threeVoicesFifthAboveNtvls = [-3, 0, 2, 4];
+~twoVoicesFifthAboveNtvls = [-3, -1, 0, 2, 4];
+~ntvlOpts = [];
+~ntvlValidations = (
+	4: {
+		if (isPrereqLastNtvlPresent.value([ -3, -1, 0 ]) and:
+			{ isLastNtvlsNotMatching.value([4, -3]) } and:
+			{ isLastNtvlsNotMatching.value([4, 0]) } and:
+			{ isLastNtvlsNotMatching.value([2, -3]) } and:
+			{ ~netDegrees < 40 },
+			{ ~ntvlOpts = ~ntvlOpts.add(4) }
+		);
+	},
+	2: {
+		if (
+			isPrereqLastNtvlPresent.value([ -3, -1, 0, 2, 4 ]) and:
+			{ isLastNtvlsNotMatching.value([2, 2]) }and:
+			{ ~netDegrees < 42 },
+			{ ~ntvlOpts = ~ntvlOpts.add(2)}
+		);
+	},
+	0: {
+		if (isPrereqLastNtvlPresent.value([ 0 ]) !== true,
+			{ ~ntvlOpts = ~ntvlOpts.add(0) }
+		);
+	},
+	-1: {
+		if (
+			isPrereqLastNtvlPresent.value([ -3, -1, 0, -2, 4 ]) and:
+			{ ~netDegrees > 26 },
+			{ ~ntvlOpts = ~ntvlOpts.add(-1) }
+		);
+	},
+	-3: {
+		if (
+			isPrereqLastNtvlPresent.value([ 0, 2, 4 ]) and:
+			{ isLastNtvlsNotMatching.value([-3, 4]) } and:
+			{ isLastNtvlsNotMatching.value([-3, 0]) } and:
+			{ ~netDegrees > 28 },
+			{ ~ntvlOpts = ~ntvlOpts.add(-3) }
+		);
+	}
+);
+~getNtvlOpts = {
+	arg potentialNtvls = [];
+	~ntvlOpts = [];
+	potentialNtvls.do({ |ntvl|
+		~ntvlValidations[ntvl].value();
+	});
+};
+~melodyCreator = {
+	arg beats = [];
+	var melody = [];
+	beats.do({ |beat|
+		melody = melody.add(~leaps[beat].choose);
+	});
+	melody;
+};
+~tailorMelody = {
+	arg melody = [], voiceNum = 1;
+	if (voiceNum === 3, { 2.do({ melody.pop; }) });
+	if (voiceNum === 1 && melody[melody.size - 1] === \cadenceRaised,
+		{
+			melody.pop;
+			melody = melody.add(~leaps[('cadenceRaised'++voiceNum).asSymbol].choose);
+		},
+		{
+			melody.pop;
+			melody = melody.add(~leaps[('cadence'++voiceNum).asSymbol].choose);
+		}
+	);
+	melody.flatten;
+};
 
 TempoClock.default.tempo = 0.8;
 s.latency = 0.2;
