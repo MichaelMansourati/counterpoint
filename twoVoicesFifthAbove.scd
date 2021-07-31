@@ -32,14 +32,16 @@ var beatCreator = {
 
 var canonAndPause = {
 	arg voices = 3;
-	var beats, melody, createVoice, voice1, voice2, voice3, beginMass, canonAndPause, lastDegreeDict;
+	var melody, createVoice, lastDegreeDict;
 	~beatNtvls = [~twoVoicesFifthAboveNtvls.choose];
 	root = 0;
 	degree = (0..5).choose;
 	octave = 4;
 	~netDegrees = octave*7 + ~beatNtvls[0] + degree;
+
 	beatCreator.value;
 	melody = ~melodyCreator.value(~beatNtvls);
+
 	lastDegreeDict = (
 		1: degree,
 		2: degree + 4
@@ -48,7 +50,7 @@ var canonAndPause = {
 
 	createVoice = {
 		arg voiceNum = 1, totalVoices = 3;
-		var stepData = Pseq(~melodyTailor.value(melody, voiceNum), 1);
+		var stepData = Pseq(~tailorMelody.value(melody, voiceNum), 1);
 		var pan = (voiceNum - 1)/(totalVoices - 1) - 0.5;
 		Pmono(\simple,
 			\stepData, stepData,
@@ -65,7 +67,7 @@ var canonAndPause = {
 		).play(quant: Quant(1, 0, voiceNum - 1));
 	};
 	voices.do({ |i| createVoice.value(i + 1) });
-	((beats.size + 2) * (1/TempoClock.default.tempo)).yield;
+	((~beatNtvls.size + 2) * (1/TempoClock.default.tempo)).yield;
 };
 Synth(\reverb);
 Task({ { canonAndPause.value(2) }.loop; }).start;
