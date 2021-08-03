@@ -51,7 +51,71 @@ isLastNtvlsNotMatching = { arg ntvls = [];
 		{ true }
 	);
 },
-bus, lag;
+bus, lag,
+getFicta = {
+	arg voiceCount = 3;
+	if (
+		voiceCount === 3,
+		{ (~netDegrees + 3) % 7 },
+		{ (~netDegrees + 1) % 7 }
+	);
+},
+
+addPrecadentialBeats = {
+	arg voiceCount = 3;
+	var beatsToAdd;
+	if (
+		voiceCount === 3,
+		{ beatsToAdd = [ 2, -1 ] },
+		{ beatsToAdd = [ -1 ] }
+	);
+	~beatNtvls = ~beatNtvls.addAll(beatsToAdd);
+},
+
+getIsTimeToCadence = {
+	arg voiceCount = 3, fictaDegree = 0;
+	if (
+		voiceCount === 3,
+		{
+			~beatNtvls.size > 32 &&
+			~ntvlOpts.find[2] !== nil &&
+			[1, 5].find([fictaDegree]) === nil;
+		},
+		{
+			~beatNtvls.size > 32 &&
+			[1, 5].find([fictaDegree]) === nil;
+		}
+	);
+},
+
+beatCreator = {
+	arg voiceCount = 3;
+	while({
+		~beatNtvls.size < 40 and:
+		{ [\cadence, \cadenceRaised ].find([~beatNtvls[~beatNtvls.size - 1]]) === nil };
+	}, {
+		var fictaDegree = getFicta.value(voiceCount);
+		~getNtvlOpts.value(~threeVoicesFifthAboveNtvls);
+		if (
+			~beatNtvls.size > 32 and:
+			{ ~ntvlOpts.find([2]) !== nil } and:
+			{ [1, 5].find([fictaDegree]) === nil },
+			{
+				addPrecadentialBeats.value(voiceCount);
+
+				if ([4,3,0].find([fictaDegree]) !== nil,
+					{ ~beatNtvls = ~beatNtvls.add(\cadenceRaised) },
+					{ ~beatNtvls = ~beatNtvls.add(\cadence) }
+				);
+			},
+			{
+				var chosenNtvl = ~ntvlOpts.choose;
+				~beatNtvls = ~beatNtvls.add(chosenNtvl);
+				~netDegrees = ~netDegrees + chosenNtvl;
+			}
+		);
+	});
+};
 ~leaps = (
 	-3: fourthDownOptions,
 	-1: secondDownOptions,
@@ -67,8 +131,10 @@ bus, lag;
 );
 ~beatNtvls = [];
 ~netDegrees = 0;
-~threeVoicesFifthAboveNtvls = [-3, 0, 2, 4];
-~twoVoicesFifthAboveNtvls = [-3, -1, 0, 2, 4];
+~ntvlSets = (
+	2: [-3, -1, 0, 2, 4],
+	3: [-3, 0, 2, 4]
+);
 ~ntvlOpts = [];
 ~ntvlValidations = (
 	4: {
@@ -141,6 +207,46 @@ bus, lag;
 	melody.flatten;
 };
 
+~canonAndPause = {
+	arg voices = 3;
+	var melody, createVoice, lastDegreeDict;
+	var root = 0;
+	var degree = (0..5).choose;
+	var octave = 4;
+	~beatNtvls = [~ntvlSets[voices].choose];
+	~netDegrees = octave*7 + ~beatNtvls[0] + degree;
+
+	beatCreator.value;
+	melody = ~melodyCreator.value(~beatNtvls);
+
+	lastDegreeDict = (
+		1: degree,
+		2: degree + 4,
+		3: degree - 3
+	);
+
+	createVoice = {
+		arg voiceNum = 1, totalVoices = 3;
+		var stepData = Pseq(~tailorMelody.value(melody, voiceNum), 1);
+		var pan = (voiceNum - 1)/(totalVoices - 1) - 0.5;
+		Pmono(\simple,
+			\stepData, stepData,
+			\stepVelocity, Pkey(\stepData).collect({|e| e[0]}),
+			\degree, Pfunc({|event| event[\stepVelocity] + lastDegreeDict[voiceNum] }),
+			\dur, Pkey(\stepData).collect({|e| e[1]}),
+			\scale, Scale.major,
+			\octave, octave,
+			\root, root,
+			\pan, pan,
+			\gate, 1,
+			\amp, 1,
+			\callback, { |event| lastDegreeDict[voiceNum] = event[\degree] }
+		).play(quant: Quant(1, 0, voiceNum - 1));
+	};
+	voices.do({ |i| createVoice.value(i + 1) });
+	((~beatNtvls.size + 1) * (1/TempoClock.default.tempo)).yield;
+};
+
 TempoClock.default.tempo = 0.8;
 s.latency = 0.2;
 
@@ -163,4 +269,10 @@ SynthDef(\reverb, {
 	sig = FreeVerb.ar(sig, 0.2, 0.9);
 	Out.ar(0, sig);
 }).add;
+)
+
+(
+Synth(\reverb);
+// pass 2 or 3 as the argument to get a canon of that number of voices
+Task({ { ~canonAndPause.value(2) }.loop; }).start;
 )
