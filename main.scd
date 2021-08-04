@@ -1,21 +1,9 @@
-(thisProcess.nowExecutingPath.dirname+/+"leaps.scd").load;
 (
-var isPrereqLastNtvlPresent = { |prereqNtvls|
-	prereqNtvls.find([
-		~beatNtvls[~beatNtvls.size - 1]
-	]) !== nil;
-},
-isLastNtvlsNotMatching = { arg ntvls = [];
-	if (ntvls.size <= ~beatNtvls.size,
-		{
-			ntvls != ~beatNtvls.slice(
-				((~beatNtvls.size - (ntvls.size))..(~beatNtvls.size - 1))
-			);
-		},
-		{ true }
-	);
-},
-bus, lag,
+(thisProcess.nowExecutingPath.dirname+/+"leaps.scd").load;
+(thisProcess.nowExecutingPath.dirname+/+"intervalValidations.scd").load;
+)
+(
+var bus, lag,
 getFicta = {
 	arg voiceCount = 3;
 	if (
@@ -59,7 +47,7 @@ beatCreator = {
 		{ [\cadence, \cadenceRaised ].find([~beatNtvls[~beatNtvls.size - 1]]) === nil };
 	}, {
 		var fictaDegree = getFicta.value(voiceCount);
-		~getNtvlOpts.value(~ntvlSets[voiceCount]);
+		~getNtvlOpts.value(voiceCount);
 		if (
 			~beatNtvls.size > 32 and:
 			{ ~ntvlOpts.find([2]) !== nil } and:
@@ -88,53 +76,7 @@ beatCreator = {
 	3: [-3, 0, 2, 4]
 );
 ~ntvlOpts = [];
-~ntvlValidations = (
-	4: {
-		if (isPrereqLastNtvlPresent.value([ -3, -1, 0 ]) and:
-			{ isLastNtvlsNotMatching.value([4, -3]) } and:
-			{ isLastNtvlsNotMatching.value([4, 0]) } and:
-			{ isLastNtvlsNotMatching.value([2, -3]) } and:
-			{ ~netDegrees < 40 },
-			{ ~ntvlOpts = ~ntvlOpts.add(4) }
-		);
-	},
-	2: {
-		if (
-			isPrereqLastNtvlPresent.value([ -3, -1, 0, 2, 4 ]) and:
-			{ isLastNtvlsNotMatching.value([2, 2]) }and:
-			{ ~netDegrees < 42 },
-			{ ~ntvlOpts = ~ntvlOpts.add(2)}
-		);
-	},
-	0: {
-		if (isPrereqLastNtvlPresent.value([ 0 ]) !== true,
-			{ ~ntvlOpts = ~ntvlOpts.add(0) }
-		);
-	},
-	-1: {
-		if (
-			isPrereqLastNtvlPresent.value([ -3, -1, 0, -2, 4 ]) and:
-			{ ~netDegrees > 26 },
-			{ ~ntvlOpts = ~ntvlOpts.add(-1) }
-		);
-	},
-	-3: {
-		if (
-			isPrereqLastNtvlPresent.value([ 0, 2, 4 ]) and:
-			{ isLastNtvlsNotMatching.value([-3, 4]) } and:
-			{ isLastNtvlsNotMatching.value([-3, 0]) } and:
-			{ ~netDegrees > 28 },
-			{ ~ntvlOpts = ~ntvlOpts.add(-3) }
-		);
-	}
-);
-~getNtvlOpts = {
-	arg potentialNtvls = [];
-	~ntvlOpts = [];
-	potentialNtvls.do({ |ntvl|
-		~ntvlValidations[ntvl].value();
-	});
-};
+
 ~melodyCreator = {
 	arg beats = [];
 	var melody = [];
@@ -160,14 +102,14 @@ beatCreator = {
 };
 
 ~canonAndPause = {
-	arg voices = 3;
+	arg voiceCount = 3;
 	var melody, createVoice, lastDegreeDict;
 	var root = 0;
 	var degree = (0..5).choose;
 	var octave = 4;
-	~beatNtvls = [~ntvlSets[voices].choose];
+	~beatNtvls = [~ntvlSets[voiceCount].choose];
 	~netDegrees = octave*7 + ~beatNtvls[0] + degree;
-	beatCreator.value;
+	beatCreator.value(voiceCount);
 	melody = ~melodyCreator.value(~beatNtvls);
 
 	lastDegreeDict = (
@@ -177,9 +119,9 @@ beatCreator = {
 	);
 
 	createVoice = {
-		arg voiceNum = 1, totalVoices = 3;
+		arg voiceNum = 1;
 		var stepData = Pseq(~tailorMelody.value(melody, voiceNum), 1);
-		var pan = (voiceNum - 1)/(totalVoices - 1) - 0.5;
+		var pan = (voiceNum - 1)/(voiceCount - 1) - 0.5;
 		Pmono(\simple,
 			\stepData, stepData,
 			\stepVelocity, Pkey(\stepData).collect({|e| e[0]}),
@@ -194,7 +136,7 @@ beatCreator = {
 			\callback, { |event| lastDegreeDict[voiceNum] = event[\degree] }
 		).play(quant: Quant(1, 0, voiceNum - 1));
 	};
-	voices.do({ |i| createVoice.value(i + 1) });
+	voiceCount.do({ |i| createVoice.value(i + 1) });
 	((~beatNtvls.size + 1) * (1/TempoClock.default.tempo)).yield;
 };
 
@@ -217,7 +159,7 @@ SynthDef(\simple, {
 
 SynthDef(\reverb, {
 	var sig = In.ar(bus, 2);
-	sig = FreeVerb.ar(sig, 0.2, 0.9);
+	sig = FreeVerb.ar(sig, 0.2, 0.9, 0.9);
 	Out.ar(0, sig);
 }).add;
 )
