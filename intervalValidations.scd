@@ -15,12 +15,12 @@ isLastNtvlsNotMatching = { arg ntvls = [];
 	);
 };
 ~getNtvlOpts = {
-	arg voiceCount = 3;
+	arg voiceOrder = 'mhl';
 	~ntvlOpts = [];
-	~ntvlValidations[voiceCount].do({ |func| func.value() });
+	~ntvlValidations[voiceOrder].do({ |func| func.value() });
 };
 ~ntvlValidations = (
-	3: [
+	'mhl': [
 		{
 			if (isPrereqLastNtvlPresent.value([ -3, -1, 0 ]) and:
 				{ isLastNtvlsNotMatching.value([4, -3]) } and:
@@ -53,7 +53,7 @@ isLastNtvlsNotMatching = { arg ntvls = [];
 			);
 		}
 	],
-	2: [
+	'mh': [
 		{
 			if (isPrereqLastNtvlPresent.value([ -3, -1, 0 ]) and:
 				{ ~netDegrees < 40 },
