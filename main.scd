@@ -5,32 +5,32 @@
 (
 var bus, lag,
 getFicta = {
-	arg voiceOrder = 'mhl';
+	arg voiceOrder = 'MHL';
 	(
-		'mhl': { (~netDegrees + 3) % 7 },
-		'mh': { (~netDegrees + 1) % 7 }
+		'MHL': { (~netDegrees + 3) % 7 },
+		'MH': { (~netDegrees + 1) % 7 }
 	)[voiceOrder].value();
 },
 
 addPrecadentialBeats = {
-	arg voiceOrder = 'mhl';
+	arg voiceOrder = 'MHL';
 	var beatsToAdd;
 	(
-		'mhl': { beatsToAdd = [ 2, -1 ] },
-		'mh': { beatsToAdd = [ -1 ] }
+		'MHL': { beatsToAdd = [ 2, -1 ] },
+		'MH': { beatsToAdd = [ -1 ] }
 	)[voiceOrder].value();
 	~beatNtvls = ~beatNtvls.addAll(beatsToAdd);
 },
 
 getIsTimeToCadence = {
-	arg voiceOrder = 'mhl', fictaDegree = 0;
+	arg voiceOrder = 'MHL', fictaDegree = 0;
 	(
-		'mhl': {
+		'MHL': {
 			~beatNtvls.size > 32 &&
 			~ntvlOpts.find[2] !== nil &&
 			[1, 5].find([fictaDegree]) === nil;
 		},
-		'mh': {
+		'MH': {
 			~beatNtvls.size > 32 &&
 			[1, 5].find([fictaDegree]) === nil;
 		}
@@ -38,7 +38,7 @@ getIsTimeToCadence = {
 },
 
 beatCreator = {
-	arg voiceOrder = 'mhl';
+	arg voiceOrder = 'MHL';
 	while({
 		~beatNtvls.size < 40 and:
 		{ [\cadence, \cadenceRaised ].find([~beatNtvls[~beatNtvls.size - 1]]) === nil };
@@ -59,6 +59,7 @@ beatCreator = {
 			},
 			{
 				var chosenNtvl = ~ntvlOpts.choose;
+				chosenNtvl.postln;
 				~beatNtvls = ~beatNtvls.add(chosenNtvl);
 				~netDegrees = ~netDegrees + chosenNtvl;
 			}
@@ -69,8 +70,8 @@ beatCreator = {
 ~beatNtvls = [];
 ~netDegrees = 0;
 ~ntvlSets = (
-	'mh': [-3, -1, 0, 2, 4],
-	'mhl': [-3, 0, 2, 4]
+	'MH': [-3, -1, 0, 2, 4],
+	'MHL': [-3, 0, 2, 4]
 );
 ~ntvlOpts = [];
 
@@ -83,23 +84,21 @@ beatCreator = {
 	melody;
 };
 ~tailorMelody = {
-	arg melody = [], voiceNum = 1;
+	arg melody = [], voiceNum = 1, voiceOrder = 'MHL';
+	var cadenceString;
+
 	if (voiceNum === 3, { 2.do({ melody.pop; }) });
+	melody.pop;
+	cadenceString = 'cadence'++voiceNum++voiceOrder;
 	if (voiceNum === 1 && melody[melody.size - 1] === \cadenceRaised,
-		{
-			melody.pop;
-			melody = melody.add(~leaps[('cadenceRaised'++voiceNum).asSymbol].choose);
-		},
-		{
-			melody.pop;
-			melody = melody.add(~leaps[('cadence'++voiceNum).asSymbol].choose);
-		}
+		{ cadenceString = cadenceString++'Raised' }, {}
 	);
+	melody = melody.add(~leaps[(cadenceString).asSymbol].choose);
 	melody.flatten;
 };
 
 ~canonAndPause = {
-	arg voiceOrder = 'mhl';
+	arg voiceOrder = 'MHL';
 	var melody, createVoice, lastDegreeDict;
 	var root = 0;
 	var degree = (0..5).choose;
@@ -118,7 +117,7 @@ beatCreator = {
 	createVoice = {
 		arg voiceNum = 1;
 		var stepData, pan;
-		stepData = Pseq(~tailorMelody.value(melody, voiceNum), 1);
+		stepData = Pseq(~tailorMelody.value(melody, voiceNum, voiceOrder), 1);
 		pan = (voiceNum - 1)/(voiceOrder.asString.size - 1) - 0.5;
 		Pmono(\simple,
 			\stepData, stepData,
@@ -134,7 +133,6 @@ beatCreator = {
 			\callback, { |event| lastDegreeDict[voiceNum] = event[\degree] }
 		).play(quant: Quant(1, 0, voiceNum - 1));
 	};
-	voiceOrder.postln;
 	voiceOrder.asString.size.do({ |i| createVoice.value(i + 1) });
 	((~beatNtvls.size + 1) * (1/TempoClock.default.tempo)).yield;
 };
@@ -166,5 +164,5 @@ SynthDef(\reverb, {
 (
 Synth(\reverb);
 // pass 2 or 3 as the argument to get a canon of that number of voices
-Task({ { ~canonAndPause.value('mhl') }.loop; }).start;
+Task({ { ~canonAndPause.value('MH') }.loop; }).start;
 )
