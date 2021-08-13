@@ -20,20 +20,21 @@ addPrecadentialBeats = {
 		'MH': { beatsToAdd = [ -1 ] }
 	)[voiceOrder].value();
 	~beatNtvls = ~beatNtvls.addAll(beatsToAdd);
+
 },
 
 getIsTimeToCadence = {
 	arg voiceOrder = 'MHL', fictaDegree = 0;
 	(
-		'MHL': {
-			~beatNtvls.size > 32 &&
-			~ntvlOpts.find[2] !== nil &&
-			[1, 5].find([fictaDegree]) === nil;
-		},
-		'MH': {
-			~beatNtvls.size > 32 &&
-			[1, 5].find([fictaDegree]) === nil;
-		}
+		'MHL': (
+			~beatNtvls.size > 32 ).and(
+			~ntvlOpts.find([2]) !== nil ).and(
+			[1, 5].find([fictaDegree]) === nil
+		),
+		'MH': (
+			~beatNtvls.size > 32 ).and(
+			[1, 5].find([fictaDegree]) === nil
+		)
 	)[voiceOrder].value();
 },
 
@@ -46,9 +47,7 @@ beatCreator = {
 		var fictaDegree = getFicta.value(voiceOrder);
 		~getNtvlOpts.value(voiceOrder);
 		if (
-			~beatNtvls.size > 32 and:
-			{ ~ntvlOpts.find([2]) !== nil } and:
-			{ [1, 5].find([fictaDegree]) === nil },
+			getIsTimeToCadence.value(voiceOrder, fictaDegree),
 			{
 				addPrecadentialBeats.value(voiceOrder);
 
@@ -59,7 +58,6 @@ beatCreator = {
 			},
 			{
 				var chosenNtvl = ~ntvlOpts.choose;
-				chosenNtvl.postln;
 				~beatNtvls = ~beatNtvls.add(chosenNtvl);
 				~netDegrees = ~netDegrees + chosenNtvl;
 			}
@@ -85,14 +83,18 @@ beatCreator = {
 };
 ~tailorMelody = {
 	arg melody = [], voiceNum = 1, voiceOrder = 'MHL';
-	var cadenceString;
+	var cadenceString,
+	cadenceType = melody[melody.size - 1];
 
 	if (voiceNum === 3, { 2.do({ melody.pop; }) });
 	melody.pop;
+
 	cadenceString = 'cadence'++voiceNum++voiceOrder;
-	if (voiceNum === 1 && melody[melody.size - 1] === \cadenceRaised,
+
+	if (voiceNum === 1 && cadenceType === \cadenceRaised,
 		{ cadenceString = cadenceString++'Raised' }, {}
 	);
+
 	melody = melody.add(~leaps[(cadenceString).asSymbol].choose);
 	melody.flatten;
 };
@@ -164,5 +166,8 @@ SynthDef(\reverb, {
 (
 Synth(\reverb);
 // pass 2 or 3 as the argument to get a canon of that number of voices
-Task({ { ~canonAndPause.value('MH') }.loop; }).start;
+Task({ {
+	~canonAndPause.value('MH');
+	~canonAndPause.value('MHL');
+}.loop; }).start;
 )
