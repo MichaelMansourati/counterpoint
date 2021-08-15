@@ -4,11 +4,14 @@
 )
 (
 var bus, lag,
-getFicta = {
+// returns the degree number that will act as
+// the leading tone of the cadence
+getLeadingToneDegree = {
 	arg voiceOrder = 'MHL';
 	(
 		'MHL': { (~netDegrees + 3) % 7 },
-		'MH': { (~netDegrees + 1) % 7 }
+		'MH': { (~netDegrees + 1) % 7 },
+		'ML': { (~netDegrees + 2) % 7 }
 	)[voiceOrder].value();
 },
 
@@ -17,24 +20,27 @@ addPrecadentialBeats = {
 	var beatsToAdd;
 	(
 		'MHL': { beatsToAdd = [ 2, -1 ] },
-		'MH': { beatsToAdd = [ -1 ] }
+		'MH': { beatsToAdd = [ -1 ] },
+		'ML': { beatsToAdd = [ 1 ] },
 	)[voiceOrder].value();
 	~beatNtvls = ~beatNtvls.addAll(beatsToAdd);
 
 },
 
 getIsTimeToCadence = {
-	arg voiceOrder = 'MHL', fictaDegree = 0;
+	arg voiceOrder = 'MHL', leadingToneDegree = 0;
+	var prereq = (
+		~beatNtvls.size > 6 ).and(
+		[1, 5].find([leadingToneDegree]) === nil
+	);
 	(
 		'MHL': (
 			~beatNtvls.size > 32 ).and(
 			~ntvlOpts.find([2]) !== nil ).and(
-			[1, 5].find([fictaDegree]) === nil
+			[1, 5].find([leadingToneDegree]) === nil
 		),
-		'MH': (
-			~beatNtvls.size > 32 ).and(
-			[1, 5].find([fictaDegree]) === nil
-		)
+		'MH': prereq,
+		'ML': prereq
 	)[voiceOrder].value();
 },
 
@@ -44,14 +50,14 @@ beatCreator = {
 		~beatNtvls.size < 40 and:
 		{ [\cadence, \cadenceRaised ].find([~beatNtvls[~beatNtvls.size - 1]]) === nil };
 	}, {
-		var fictaDegree = getFicta.value(voiceOrder);
+		var leadingToneDegree = getLeadingToneDegree.value(voiceOrder);
 		~getNtvlOpts.value(voiceOrder);
 		if (
-			getIsTimeToCadence.value(voiceOrder, fictaDegree),
+			getIsTimeToCadence.value(voiceOrder, leadingToneDegree),
 			{
 				addPrecadentialBeats.value(voiceOrder);
 
-				if ([4,3,0].find([fictaDegree]) !== nil,
+				if ([4,3,0].find([leadingToneDegree]) !== nil,
 					{ ~beatNtvls = ~beatNtvls.add(\cadenceRaised) },
 					{ ~beatNtvls = ~beatNtvls.add(\cadence) }
 				);
@@ -63,13 +69,33 @@ beatCreator = {
 			}
 		);
 	});
+},
+getLastDegreeDict = {
+	arg degree = 0, voiceOrder = 'MHL';
+	(
+		'MHL': (
+			1: degree,
+			2: degree + 4,
+			3: degree - 3
+		),
+		'MH': (
+			1: degree,
+			2: degree + 4
+		),
+		'ML': (
+			1: degree,
+			2: degree - 4
+		)
+	)[voiceOrder];
 };
+
 
 ~beatNtvls = [];
 ~netDegrees = 0;
 ~ntvlSets = (
 	'MH': [-3, -1, 0, 2, 4],
-	'MHL': [-3, 0, 2, 4]
+	'MHL': [-3, 0, 2, 4],
+	'ML': [3, 1, 0, -2, -4],
 );
 ~ntvlOpts = [];
 
@@ -109,18 +135,13 @@ beatCreator = {
 	~netDegrees = octave*7 + ~beatNtvls[0] + degree;
 	beatCreator.value(voiceOrder);
 	melody = ~melodyCreator.value(~beatNtvls);
-
-	lastDegreeDict = (
-		1: degree,
-		2: degree + 4,
-		3: degree - 3
-	);
-
+	lastDegreeDict = getLastDegreeDict.value(degree, voiceOrder);
 	createVoice = {
 		arg voiceNum = 1;
 		var stepData, pan;
 		stepData = Pseq(~tailorMelody.value(melody, voiceNum, voiceOrder), 1);
 		pan = (voiceNum - 1)/(voiceOrder.asString.size - 1) - 0.5;
+
 		Pmono(\simple,
 			\stepData, stepData,
 			\stepVelocity, Pkey(\stepData).collect({|e| e[0]}),
@@ -167,7 +188,9 @@ SynthDef(\reverb, {
 Synth(\reverb);
 // pass 2 or 3 as the argument to get a canon of that number of voices
 Task({ {
-	~canonAndPause.value('MH');
-	~canonAndPause.value('MHL');
+	// ~canonAndPause.value('MH');
+	// ~canonAndPause.value('MHL');
+	~canonAndPause.value('ML');
+
 }.loop; }).start;
 )
