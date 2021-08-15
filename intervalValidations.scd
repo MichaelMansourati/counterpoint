@@ -75,7 +75,7 @@ isLastNtvlsNotMatching = { arg ntvls = [];
 		},
 		{
 			if (
-				isPrereqLastNtvlPresent.value([ -3, -1, 0, -2, 4 ]) and:
+				isPrereqLastNtvlPresent.value([ -3, -1, 0, 2, 4 ]) and:
 				{ ~netDegrees > 26 },
 				{ ~ntvlOpts = ~ntvlOpts.add(-1) }
 			);
