@@ -1,17 +1,18 @@
 (
 var invertOptions = {
 	arg opts = [ [ [ 0, 0 ] ] ];
-	opts.collect({
+	opts.collectCopy({
 		arg opt = [ [ 0, 0 ] ];
-		opt.collect({
+		opt.collectCopy({
 			arg note = [ 0, 0 ];
 			note[0] = note[0] * -1;
 		});
 	});
+	opts;
 },
 deepCloneArray = {
 	arg options = [ [ [ 0, 0 ] ] ];
-	options.collect({ |i| i.collect({ |i| i.collect({ |i| i }) }) });
+	options.collectCopy({ |i| i.collectCopy({ |i| i.collectCopy({ |i| i }) }) });
 };
 
 ~leaps = ();
@@ -40,10 +41,10 @@ deepCloneArray = {
 	[ [ 0, 0.25 ], [ 1, 0.25 ], [ 1, 0.25 ], [ 1, 0.25 ], [ 1, 0 ] ],
 ];
 
-/*~leaps[3] = invertOptions.value(~leaps[-3]);
-~leaps[1] = invertOptions.value(~leaps[-1]);
-~leaps[-2] = invertOptions.value(~leaps[2]);
-~leaps[-4] = invertOptions.value(~leaps[4]);*/
+~leaps[3] = invertOptions.value(deepCloneArray.value(~leaps[-3]));
+~leaps[1] = invertOptions.value(deepCloneArray.value(~leaps[-1]));
+~leaps[-2] = invertOptions.value(deepCloneArray.value(~leaps[2]));
+~leaps[-4] = invertOptions.value(deepCloneArray.value(~leaps[4]));
 
 // VOICE 1
 ~leaps[\cadence1MH] = [ [ [ 0, 0.5 ], [ 3, 1 ], [ -1, 0.5 ], [ 1, 2 ] ] ];
@@ -74,7 +75,7 @@ deepCloneArray = {
 
 ~leaps[\cadence1MLRaised] = deepCloneArray.value(~leaps[\cadence1ML]);
 ~leaps[\cadence1MLRaised][0][2][0] = -0.9;
-~leaps[\cadence1MLRaised][0][2][0] = 0.9;
+~leaps[\cadence1MLRaised][0][3][0] = 0.9;
 
 ~leaps[\cadence1MLHRaised] = ~leaps[\cadence1MLRaised];
 
