@@ -19,6 +19,8 @@ isLastNtvlsNotMatching = { arg ntvls = [];
 	~ntvlOpts = [];
 	~ntvlValidations[voiceOrder].do({ |func| func.value() });
 };
+
+//max 47, min 26
 ~ntvlValidations = (
 	'MHL': [
 		{
@@ -85,6 +87,41 @@ isLastNtvlsNotMatching = { arg ntvls = [];
 				isPrereqLastNtvlPresent.value([ 0, 2, 4 ]) and:
 				{ ~netDegrees > 28 },
 				{ ~ntvlOpts = ~ntvlOpts.add(-3) }
+			);
+		}
+	],
+	'ML': [
+		{
+			if (isPrereqLastNtvlPresent.value([ 3, 1, 0 ]) and:
+				{ ~netDegrees > 33 },
+				{ ~ntvlOpts = ~ntvlOpts.add(-4) }
+			);
+		},
+		{
+			if (
+				isPrereqLastNtvlPresent.value([ 3, 1, 0, -2, -4 ]) and:
+				{ isLastNtvlsNotMatching.value([-2, -2]) }and:
+				{ ~netDegrees > 31 },
+				{ ~ntvlOpts = ~ntvlOpts.add(-2)}
+			);
+		},
+		{
+			if (isPrereqLastNtvlPresent.value([ 0 ]) !== true,
+				{ ~ntvlOpts = ~ntvlOpts.add(0) }
+			);
+		},
+		{
+			if (
+				isPrereqLastNtvlPresent.value([ 3, 1, 0, -2, -4 ]) and:
+				{ ~netDegrees < 47 },
+				{ ~ntvlOpts = ~ntvlOpts.add(1) }
+			);
+		},
+		{
+			if (
+				isPrereqLastNtvlPresent.value([ 0, -2, -4 ]) and:
+				{ ~netDegrees < 45 },
+				{ ~ntvlOpts = ~ntvlOpts.add(3) }
 			);
 		}
 	]
