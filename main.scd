@@ -8,21 +8,25 @@ var bus, lag,
 // the leading tone of the cadence
 getLeadingToneDegree = {
 	arg voiceOrder = 'MHL';
-	(
-		'MHL': { (~netDegrees + 3) % 7 },
-		'MH': { (~netDegrees + 1) % 7 },
-		'ML': { (~netDegrees + 2) % 7 }
-	)[voiceOrder].value();
+	var leadingToneDistance = (
+		'MH': 1,
+		'ML': 2,
+		'MHL': 3,
+		'MLH': 0
+	)[voiceOrder];
+	(~netDegrees + leadingToneDistance) % 7;
+
 },
 
 addPrecadentialBeats = {
 	arg voiceOrder = 'MHL';
-	var beatsToAdd;
+	var beatsToAdd =
 	(
-		'MHL': { beatsToAdd = [ 2, -1 ] },
-		'MH': { beatsToAdd = [ -1 ] },
-		'ML': { beatsToAdd = [ 1 ] },
-	)[voiceOrder].value();
+		'MH': [ -1 ],
+		'ML': [ 1 ],
+		'MHL': [ 2, -1 ],
+		'MLH': [ -2, 1 ]
+	)[voiceOrder];
 	~beatNtvls = ~beatNtvls.addAll(beatsToAdd);
 
 },
@@ -34,13 +38,10 @@ getIsTimeToCadence = {
 		[1, 5].find([leadingToneDegree]) === nil
 	);
 	(
-		'MHL': (
-			~beatNtvls.size > 32 ).and(
-			~ntvlOpts.find([2]) !== nil ).and(
-			[1, 5].find([leadingToneDegree]) === nil
-		),
 		'MH': prereq,
-		'ML': prereq
+		'ML': prereq,
+		'MHL': prereq.and(~ntvlOpts.find([2]) !== nil ),
+		'MLH': prereq.and(~ntvlOpts.find([-2]) !== nil )
 	)[voiceOrder].value();
 },
 
@@ -85,23 +86,29 @@ getLastDegreeDict = {
 		'ML': (
 			1: degree,
 			2: degree - 4
+		),
+		'MLH': (
+			1: degree,
+			2: degree - 4,
+			3: degree + 3
 		)
 	)[voiceOrder];
 };
 
 
-~beatNtvls = [];
+~beatNtvls = [ ];
 ~netDegrees = 0;
 ~ntvlSets = (
-	'MH': [-3, -1, 0, 2, 4],
-	'MHL': [-3, 0, 2, 4],
-	'ML': [3, 1, 0, -2, -4],
+	'MH': [ -3, -1, 0, 2, 4 ],
+	'MHL': [ -3, 0, 2, 4 ],
+	'ML': [ 3, 1, 0, -2, -4 ],
+	'MLH': [ 3, 0, -2, -4 ]
 );
-~ntvlOpts = [];
+~ntvlOpts = [ ];
 
 ~melodyCreator = {
-	arg beats = [];
-	var melody = [];
+	arg beats = [ ];
+	var melody = [ ];
 	beats.do({ |beat|
 		melody = melody.add(~leaps[beat].choose);
 	});
@@ -118,7 +125,7 @@ getLastDegreeDict = {
 	cadenceString = 'cadence'++voiceNum++voiceOrder;
 
 	if (voiceNum === 1 && cadenceType === \cadenceRaised,
-		{ cadenceString = cadenceString++'Raised' }, {}
+		{ "raised".postln; cadenceString = cadenceString++'Raised' }, {}
 	);
 
 	melody = melody.add(~leaps[(cadenceString).asSymbol].choose);
@@ -133,6 +140,7 @@ getLastDegreeDict = {
 	var octave = 4;
 	~beatNtvls = [~ntvlSets[voiceOrder].choose];
 	~netDegrees = octave*7 + ~beatNtvls[0] + degree;
+	"start degree: "++~netDegrees.postln;
 	beatCreator.value(voiceOrder);
 	melody = ~melodyCreator.value(~beatNtvls);
 	lastDegreeDict = getLastDegreeDict.value(degree, voiceOrder);
@@ -186,11 +194,10 @@ SynthDef(\reverb, {
 
 (
 Synth(\reverb);
-// pass 2 or 3 as the argument to get a canon of that number of voices
 Task({ {
 	// ~canonAndPause.value('MH');
 	// ~canonAndPause.value('MHL');
-	~canonAndPause.value('ML');
-
+	// ~canonAndPause.value('ML');
+	~canonAndPause.value('MLH'); //starting note needs to be higher!!! //fifth below has different tritone location???
 }.loop; }).start;
 )

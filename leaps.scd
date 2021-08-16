@@ -98,8 +98,8 @@ deepCloneArray = {
 
 // VOICE 3
 ~leaps[\cadence3MHL] = [ [ [ 0, 1 ], [ -3, 1 ], [ 3, 4 ] ] ];
+~leaps[\cadence3MLH] = [ [ [ 0, 1 ], [ 1, 1 ], [ -1, 4 ] ] ];
 ~leaps[\cadence3HLM] = [ [ 0, 1 ], [ -1, 1 ], [ -1, 4 ] ];
-~leaps[\cadence3HLM] = ~leaps[\cadence3HLM];
 ~leaps[\cadence3LHM] = "?????"; //LHM is a special case
 
 ~leaps[\cadence] = [\cadence];
