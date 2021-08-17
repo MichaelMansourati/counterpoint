@@ -42,6 +42,7 @@ deepCloneArray = {
 ];
 
 ~leaps[3] = invertOptions.value(deepCloneArray.value(~leaps[-3]));
+~leaps[3][1] = [ [ 0, 0.5 ], [ 2, 0.5 ], [ 1, 0 ] ];
 ~leaps[1] = invertOptions.value(deepCloneArray.value(~leaps[-1]));
 ~leaps[-2] = invertOptions.value(deepCloneArray.value(~leaps[2]));
 ~leaps[-4] = invertOptions.value(deepCloneArray.value(~leaps[4]));
@@ -105,4 +106,3 @@ deepCloneArray = {
 ~leaps[\cadence] = [\cadence];
 ~leaps[\cadenceRaised] = [\cadenceRaised];
 )
-
