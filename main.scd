@@ -34,7 +34,7 @@ addPrecadentialBeats = {
 getIsTimeToCadence = {
 	arg voiceOrder = 'MHL', leadingToneDegree = 0;
 	var prereq = (
-		~beatNtvls.size > 6 ).and(
+		~beatNtvls.size > 10 ).and(
 		[1, 5].find([leadingToneDegree]) === nil
 	);
 	(
@@ -136,8 +136,18 @@ getLastDegreeDict = {
 	arg voiceOrder = 'MHL';
 	var melody, createVoice, lastDegreeDict;
 	var root = 0;
-	var degree = (0..5).choose;
-	var octave = 4;
+	var octave, degree;
+	if (['MLH','ML'].includes(voiceOrder),
+		{
+			octave = 5;
+			degree = (-3..2).choose;
+		},
+		{
+			octave = 4;
+			degree = (0..5).choose;
+		}
+	);
+
 	~beatNtvls = [~ntvlSets[voiceOrder].choose];
 	~netDegrees = octave*7 + ~beatNtvls[0] + degree;
 	"start degree: "++~netDegrees.postln;
@@ -195,9 +205,9 @@ SynthDef(\reverb, {
 (
 Synth(\reverb);
 Task({ {
-	// ~canonAndPause.value('MH');
-	// ~canonAndPause.value('MHL');
-	// ~canonAndPause.value('ML');
-	~canonAndPause.value('MLH'); //starting note needs to be higher!!! //fifth below has different tritone location???
+	~canonAndPause.value('MH');
+	~canonAndPause.value('MHL');
+	~canonAndPause.value('ML');
+	~canonAndPause.value('MLH');
 }.loop; }).start;
 )
