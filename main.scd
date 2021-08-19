@@ -7,32 +7,30 @@ var bus, lag,
 // returns the degree number that will act as
 // the leading tone of the cadence
 getLeadingToneDegree = {
-	arg voiceOrder = 'MHL';
 	var leadingToneDistance = (
 		'MH': 1,
 		'ML': 2,
 		'MHL': 3,
 		'MLH': 0
-	)[voiceOrder];
+	)[~voiceOrder];
 	(~netDegrees + leadingToneDistance) % 7;
 
 },
 
 addPrecadentialBeats = {
-	arg voiceOrder = 'MHL';
 	var beatsToAdd =
 	(
 		'MH': [ -1 ],
 		'ML': [ 1 ],
 		'MHL': [ 2, -1 ],
 		'MLH': [ -2, 1 ]
-	)[voiceOrder];
+	)[~voiceOrder];
 	~beatNtvls = ~beatNtvls.addAll(beatsToAdd);
 
 },
 
 getIsTimeToCadence = {
-	arg voiceOrder = 'MHL', leadingToneDegree = 0;
+	arg leadingToneDegree = 0;
 	var prereq = (
 		~beatNtvls.size > 10 ).and(
 		[1, 5].find([leadingToneDegree]) === nil
@@ -42,21 +40,20 @@ getIsTimeToCadence = {
 		'ML': prereq,
 		'MHL': prereq.and(~ntvlOpts.find([2]) !== nil ),
 		'MLH': prereq.and(~ntvlOpts.find([-2]) !== nil )
-	)[voiceOrder].value();
+	)[~voiceOrder].value();
 },
 
-beatCreator = {
-	arg voiceOrder = 'MHL';
+createBeats = {
 	while({
 		~beatNtvls.size < 40 and:
 		{ [\cadence, \cadenceRaised ].find([~beatNtvls[~beatNtvls.size - 1]]) === nil };
 	}, {
-		var leadingToneDegree = getLeadingToneDegree.value(voiceOrder);
-		~getNtvlOpts.value(voiceOrder);
+		var leadingToneDegree = getLeadingToneDegree.value;
+		~getNtvlOpts.value(~voiceOrder);
 		if (
-			getIsTimeToCadence.value(voiceOrder, leadingToneDegree),
+			getIsTimeToCadence.value(leadingToneDegree),
 			{
-				addPrecadentialBeats.value(voiceOrder);
+				addPrecadentialBeats.value;
 
 				if ([4,3,0].find([leadingToneDegree]) !== nil,
 					{ ~beatNtvls = ~beatNtvls.add(\cadenceRaised) },
@@ -72,7 +69,7 @@ beatCreator = {
 	});
 },
 getLastDegreeDict = {
-	arg degree = 0, voiceOrder = 'MHL';
+	arg degree = 0;
 	(
 		'MHL': (
 			1: degree,
@@ -92,7 +89,7 @@ getLastDegreeDict = {
 			2: degree - 4,
 			3: degree + 3
 		)
-	)[voiceOrder];
+	)[~voiceOrder];
 };
 
 
@@ -107,22 +104,21 @@ getLastDegreeDict = {
 ~ntvlOpts = [ ];
 
 ~melodyCreator = {
-	arg beats = [ ];
 	var melody = [ ];
-	beats.do({ |beat|
+	~beatNtvls.do({ |beat|
 		melody = melody.add(~leaps[beat].choose);
 	});
 	melody;
 };
 ~tailorMelody = {
-	arg melody = [], voiceNum = 1, voiceOrder = 'MHL';
+	arg melody = [], voiceNum = 1;
 	var cadenceString,
 	cadenceType = melody[melody.size - 1];
 
 	if (voiceNum === 3, { 2.do({ melody.pop; }) });
 	melody.pop;
 
-	cadenceString = 'cadence'++voiceNum++voiceOrder;
+	cadenceString = 'cadence'++voiceNum++~voiceOrder;
 
 	if (voiceNum === 1 && cadenceType === \cadenceRaised,
 		{ "raised".postln; cadenceString = cadenceString++'Raised' }, {}
@@ -137,7 +133,8 @@ getLastDegreeDict = {
 	var melody, createVoice, lastDegreeDict;
 	var root = 0;
 	var octave, degree;
-	if (['MLH','ML'].includes(voiceOrder),
+	~voiceOrder = voiceOrder;
+	if (['MLH','ML'].includes(~voiceOrder),
 		{
 			octave = 5;
 			degree = (-3..2).choose;
@@ -147,18 +144,20 @@ getLastDegreeDict = {
 			degree = (0..5).choose;
 		}
 	);
-
-	~beatNtvls = [~ntvlSets[voiceOrder].choose];
+	~beatNtvls = [~ntvlSets[~voiceOrder].choose];
 	~netDegrees = octave*7 + ~beatNtvls[0] + degree;
-	"start degree: "++~netDegrees.postln;
-	beatCreator.value(voiceOrder);
-	melody = ~melodyCreator.value(~beatNtvls);
-	lastDegreeDict = getLastDegreeDict.value(degree, voiceOrder);
+
+	createBeats.value;
+
+	melody = ~melodyCreator.value;
+
+	lastDegreeDict = getLastDegreeDict.value(degree);
+
 	createVoice = {
 		arg voiceNum = 1;
-		var stepData, pan;
-		stepData = Pseq(~tailorMelody.value(melody, voiceNum, voiceOrder), 1);
-		pan = (voiceNum - 1)/(voiceOrder.asString.size - 1) - 0.5;
+
+		var stepData = Pseq(~tailorMelody.value(melody, voiceNum), 1);
+		var pan = (voiceNum - 1)/(~voiceOrder.asString.size - 1) - 0.5;
 
 		Pmono(\simple,
 			\stepData, stepData,
@@ -174,7 +173,8 @@ getLastDegreeDict = {
 			\callback, { |event| lastDegreeDict[voiceNum] = event[\degree] }
 		).play(quant: Quant(1, 0, voiceNum - 1));
 	};
-	voiceOrder.asString.size.do({ |i| createVoice.value(i + 1) });
+
+	~voiceOrder.asString.size.do({ |i| createVoice.value(i + 1) });
 	((~beatNtvls.size + 1) * (1/TempoClock.default.tempo)).yield;
 };
 
