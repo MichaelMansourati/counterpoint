@@ -4,8 +4,9 @@
 )
 (
 var bus, lag,
-// returns the degree number that will act as
-// the leading tone of the cadence
+// returns the degree number that would act as
+// the leading tone of the cadence were the cadence
+// to occur at the time of calling
 getLeadingToneDegree = {
 	var leadingToneDistance = (
 		'MH': 1,
@@ -17,6 +18,9 @@ getLeadingToneDegree = {
 
 },
 
+// these are the required movements for each voice
+// in order to set up the respective cadence for
+// each voice order permutation
 addPrecadentialBeats = {
 	var beatsToAdd =
 	(
@@ -32,14 +36,15 @@ addPrecadentialBeats = {
 getIsTimeToCadence = {
 	arg leadingToneDegree = 0;
 	var prereq = (
-		~beatNtvls.size > 10 ).and(
+		~beatNtvls.size > 32 ).and(
 		[1, 5].find([leadingToneDegree]) === nil
 	);
+
 	(
 		'MH': prereq,
 		'ML': prereq,
-		'MHL': prereq.and(~ntvlOpts.find([2]) !== nil ),
-		'MLH': prereq.and(~ntvlOpts.find([-2]) !== nil )
+		'MHL': prereq.and(~ntvlOpts.find([ [ 2, 1 ] ]) !== nil ),
+		'MLH': prereq.and(~ntvlOpts.find([ [ -2, 1 ] ]) !== nil )
 	)[~voiceOrder].value();
 },
 
@@ -61,7 +66,8 @@ createBeats = {
 				);
 			},
 			{
-				var chosenNtvl = ~ntvlOpts.choose;
+				var chosenNtvl = ~ntvlOpts.flop[0].wchoose(~ntvlOpts.flop[1].normalizeSum);
+				~ntvlOpts.flop[0].postln; ~ntvlOpts.flop[1].normalizeSum.postln;
 				~beatNtvls = ~beatNtvls.add(chosenNtvl);
 				~netDegrees = ~netDegrees + chosenNtvl;
 			}
@@ -121,7 +127,7 @@ getLastDegreeDict = {
 	cadenceString = 'cadence'++voiceNum++~voiceOrder;
 
 	if (voiceNum === 1 && cadenceType === \cadenceRaised,
-		{ "raised".postln; cadenceString = cadenceString++'Raised' }, {}
+		{ cadenceString = cadenceString++'Raised' }, {}
 	);
 
 	melody = melody.add(~leaps[(cadenceString).asSymbol].choose);
@@ -133,7 +139,7 @@ getLastDegreeDict = {
 	var melody, createVoice, lastDegreeDict;
 	var root = 0;
 	var octave, degree;
-	~voiceOrder = voiceOrder;
+	~voiceOrder = voiceOrder.postln;
 	if (['MLH','ML'].includes(~voiceOrder),
 		{
 			octave = 5;

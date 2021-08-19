@@ -29,7 +29,7 @@ isLastNtvlsNotMatching = { arg ntvls = [];
 				{ isLastNtvlsNotMatching.value([4, 0]) } and:
 				{ isLastNtvlsNotMatching.value([2, -3]) } and:
 				{ ~netDegrees < 40 },
-				{ ~ntvlOpts = ~ntvlOpts.add(4) }
+				{ ~ntvlOpts = ~ntvlOpts.add([ 4, 1 ]) }
 			);
 		},
 		{
@@ -37,12 +37,12 @@ isLastNtvlsNotMatching = { arg ntvls = [];
 				isPrereqLastNtvlPresent.value([ -3, -1, 0, 2, 4 ]) and:
 				{ isLastNtvlsNotMatching.value([2, 2]) }and:
 				{ ~netDegrees < 42 },
-				{ ~ntvlOpts = ~ntvlOpts.add(2)}
+				{ ~ntvlOpts = ~ntvlOpts.add([ 2, 1 ])}
 			);
 		},
 		{
 			if (isPrereqLastNtvlPresent.value([ 0 ]) !== true,
-				{ ~ntvlOpts = ~ntvlOpts.add(0) }
+				{ ~ntvlOpts = ~ntvlOpts.add([ 0, 1 ]) }
 			);
 		},
 		{
@@ -51,7 +51,7 @@ isLastNtvlsNotMatching = { arg ntvls = [];
 				{ isLastNtvlsNotMatching.value([-3, 4]) } and:
 				{ isLastNtvlsNotMatching.value([-3, 0]) } and:
 				{ ~netDegrees > 28 },
-				{ ~ntvlOpts = ~ntvlOpts.add(-3) }
+				{ ~ntvlOpts = ~ntvlOpts.add([ -3, 2 ]) }
 			);
 		}
 	],
@@ -59,7 +59,7 @@ isLastNtvlsNotMatching = { arg ntvls = [];
 		{
 			if (isPrereqLastNtvlPresent.value([ -3, -1, 0 ]) and:
 				{ ~netDegrees < 40 },
-				{ ~ntvlOpts = ~ntvlOpts.add(4) }
+				{ ~ntvlOpts = ~ntvlOpts.add([4, 1]) }
 			);
 		},
 		{
@@ -67,26 +67,26 @@ isLastNtvlsNotMatching = { arg ntvls = [];
 				isPrereqLastNtvlPresent.value([ -3, -1, 0, 2, 4 ]) and:
 				{ isLastNtvlsNotMatching.value([2, 2]) }and:
 				{ ~netDegrees < 42 },
-				{ ~ntvlOpts = ~ntvlOpts.add(2)}
+				{ ~ntvlOpts = ~ntvlOpts.add([ 2, 1 ])}
 			);
 		},
 		{
 			if (isPrereqLastNtvlPresent.value([ 0 ]) !== true,
-				{ ~ntvlOpts = ~ntvlOpts.add(0) }
+				{ ~ntvlOpts = ~ntvlOpts.add([ 0, 1 ]) }
 			);
 		},
 		{
 			if (
 				isPrereqLastNtvlPresent.value([ -3, -1, 0, 2, 4 ]) and:
 				{ ~netDegrees > 26 },
-				{ ~ntvlOpts = ~ntvlOpts.add(-1) }
+				{ ~ntvlOpts = ~ntvlOpts.add([ -1, 1.5 ]) }
 			);
 		},
 		{
 			if (
 				isPrereqLastNtvlPresent.value([ 0, 2, 4 ]) and:
 				{ ~netDegrees > 28 },
-				{ ~ntvlOpts = ~ntvlOpts.add(-3) }
+				{ ~ntvlOpts = ~ntvlOpts.add([ -3, 1.5 ]) }
 			);
 		}
 	],
@@ -94,7 +94,7 @@ isLastNtvlsNotMatching = { arg ntvls = [];
 		{
 			if (isPrereqLastNtvlPresent.value([ 3, 1, 0 ]) and:
 				{ ~netDegrees > 33 },
-				{ ~ntvlOpts = ~ntvlOpts.add(-4) }
+				{ ~ntvlOpts = ~ntvlOpts.add([ -4, 1 ]) }
 			);
 		},
 		{
@@ -102,26 +102,26 @@ isLastNtvlsNotMatching = { arg ntvls = [];
 				isPrereqLastNtvlPresent.value([ 3, 1, 0, -2, -4 ]) and:
 				{ isLastNtvlsNotMatching.value([-2, -2]) }and:
 				{ ~netDegrees > 31 },
-				{ ~ntvlOpts = ~ntvlOpts.add(-2)}
+				{ ~ntvlOpts = ~ntvlOpts.add([ -2, 1 ])}
 			);
 		},
 		{
 			if (isPrereqLastNtvlPresent.value([ 0 ]) !== true,
-				{ ~ntvlOpts = ~ntvlOpts.add(0) }
+				{ ~ntvlOpts = ~ntvlOpts.add([ 0, 1 ]) }
 			);
 		},
 		{
 			if (
 				isPrereqLastNtvlPresent.value([ 3, 1, 0, -2, -4 ]) and:
 				{ ~netDegrees < 47 },
-				{ ~ntvlOpts = ~ntvlOpts.add(1) }
+				{ ~ntvlOpts = ~ntvlOpts.add([ 1, 1.5 ]) }
 			);
 		},
 		{
 			if (
 				isPrereqLastNtvlPresent.value([ 0, -2, -4 ]) and:
 				{ ~netDegrees < 45 },
-				{ ~ntvlOpts = ~ntvlOpts.add(3) }
+				{ ~ntvlOpts = ~ntvlOpts.add([ 3, 1.5 ]) }
 			);
 		}
 	],
@@ -132,7 +132,7 @@ isLastNtvlsNotMatching = { arg ntvls = [];
 				{ isLastNtvlsNotMatching.value([-4, 0]) } and:
 				{ isLastNtvlsNotMatching.value([-2, 3]) } and:
 				{ ~netDegrees > 29 },
-				{ ~ntvlOpts = ~ntvlOpts.add(-4) },
+				{ ~ntvlOpts = ~ntvlOpts.add([ -4, 1 ]) },
 			);
 		},
 		{
@@ -141,12 +141,12 @@ isLastNtvlsNotMatching = { arg ntvls = [];
 				{ isLastNtvlsNotMatching.value([-2, -2]) }and:
 				{ ~netDegrees > 27
 				},
-				{ ~ntvlOpts = ~ntvlOpts.add(-2)},
+				{ ~ntvlOpts = ~ntvlOpts.add([ -2, 1 ])},
 			);
 		},
 		{
 			if (isPrereqLastNtvlPresent.value([ 0 ]) !== true,
-				{ ~ntvlOpts = ~ntvlOpts.add(0) },
+				{ ~ntvlOpts = ~ntvlOpts.add([ 0, 1 ]) },
 			);
 		},
 		{
@@ -155,7 +155,7 @@ isLastNtvlsNotMatching = { arg ntvls = [];
 				{ isLastNtvlsNotMatching.value([3, -4]) } and:
 				{ isLastNtvlsNotMatching.value([3, 0]) } and:
 				{ ~netDegrees < 42 },
-				{ ~ntvlOpts = ~ntvlOpts.add(3) },
+				{ ~ntvlOpts = ~ntvlOpts.add([ 3, 2 ]) },
 			);
 		}
 	]
