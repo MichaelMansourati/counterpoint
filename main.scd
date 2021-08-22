@@ -218,12 +218,17 @@ lag = 0.05;
 SynthDef(\simple, {
 	arg freq = 100, i_pan = 0, gate = 1, amp = 1;
 	var sig, env;
-	env = EnvGen.ar(Env([0, 0.5, 0], [0.2, 1], releaseNode: 1), gate: gate, doneAction: Done.freeSelf);
+	env = EnvGen.ar(
+		Env([0, 0.5, 0], [0.2, 1], releaseNode: 1),
+		gate: gate,
+		doneAction: Done.freeSelf
+	);
 	sig = Lag.kr(freq, lag);
 	sig = Mix.new(Array.fill(3, {|i| var num = (i+1); FSinOsc.ar(sig * num, 0, 0.75) * 1/(num**3) }));
 	sig = Pan2.ar(sig, i_pan, 1) * env;
 	sig = sig * amp;
-	Out.ar(bus1, sig);
+	sig = BPF.ar(sig, 130, 1.4);
+	Out.ar(bus, sig);
 }).add;
 
 SynthDef(\reverb, {
@@ -244,4 +249,5 @@ Task({ {
 	~canonAndPause.value('MLH');
 	~canonAndPause.value('HLM');
 }.loop; }).start;
+s.freqScope
 )
