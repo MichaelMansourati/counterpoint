@@ -3,7 +3,7 @@
 (thisProcess.nowExecutingPath.dirname+/+"intervalValidations.scd").load;
 )
 (
-var bus, lag,
+var bus1, bus2, lag,
 // returns the degree number that would act as
 // the leading tone of the cadence were the cadence
 // to occur at the time of calling
@@ -67,7 +67,7 @@ createBeats = {
 			},
 			{
 				var chosenNtvl = ~ntvlOpts.flop[0].wchoose(~ntvlOpts.flop[1].normalizeSum);
-				~ntvlOpts.flop[0].postln; ~ntvlOpts.flop[1].normalizeSum.postln;
+				~ntvlOpts.flop[0]; ~ntvlOpts.flop[1].normalizeSum;
 				~beatNtvls = ~beatNtvls.add(chosenNtvl);
 				~netDegrees = ~netDegrees + chosenNtvl;
 			}
@@ -187,23 +187,28 @@ getLastDegreeDict = {
 TempoClock.default.tempo = 0.8;
 s.latency = 0.2;
 
-bus.free;
-bus = Bus.audio(s, 2);
+bus1.free;
+bus2.free;
+bus1 = Bus.audio(s, 1);
+bus2 = Bus.audio(s, 1);
 lag = 0.05;
 SynthDef(\simple, {
 	arg freq = 100, i_pan = 0, gate = 1, amp = 1;
 	var sig, env;
 	env = EnvGen.ar(Env([0, 0.5, 0], [0.2, 1], releaseNode: 1), gate: gate, doneAction: Done.freeSelf);
 	sig = Lag.kr(freq, lag);
-	sig = Mix.new(Array.fill(3, {|i| var num = (i+1); SinOsc.ar(sig * num) * 1/(num**3) }));
+	sig = Mix.new(Array.fill(3, {|i| var num = (i+1); SinOsc.ar(sig * num, 0, 0.75) * 1/(num**3) }));
 	sig = Pan2.ar(sig, i_pan, 1) * env;
 	sig = sig * amp;
-	Out.ar(bus, sig);
+	Out.ar(bus1, sig);
 }).add;
 
 SynthDef(\reverb, {
-	var sig = In.ar(bus, 2);
-	sig = FreeVerb.ar(sig, 0.2, 0.9, 0.9);
+	var sig, sig1, sig2;
+	bus1.postln;
+	sig1 = In.ar(bus1, 1);
+	sig2 = In.ar(bus2, 1);
+	sig = FreeVerb2.ar(sig1, sig2, 0.1, 0.9, 0.9);
 	Out.ar(0, sig);
 }).add;
 )
