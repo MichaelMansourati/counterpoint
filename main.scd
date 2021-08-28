@@ -170,7 +170,7 @@ getLastDegreeDict = {
 			\stepVelocity, Pkey(\stepData).collect({|e| e[0]}),
 			\degree, Pfunc({|event| event[\stepVelocity] + lastDegreeDict[voiceNum] }),
 			\dur, Pkey(\stepData).collect({|e| e[1]}),
-			\scale, Scale.major,
+			\scale, Scale.major(Tuning.mean4),
 			\octave, octave,
 			\root, root,
 			\pan, pan,
