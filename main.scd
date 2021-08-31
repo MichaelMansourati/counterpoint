@@ -211,7 +211,7 @@ SynthDef(\simple, {
 	var sig, env;
 	env = EnvGen.ar(Env([0, 0.5, 0], [0.2, 1], releaseNode: 1), gate: gate, doneAction: Done.freeSelf);
 	sig = Lag.kr(freq, lag);
-	sig = Mix.new(Array.fill(3, {|i| var num = (i+1); SinOsc.ar(sig * num, 0, 0.75) * 1/(num**3) }));
+	sig = Mix.new(Array.fill(3, {|i| var num = (i+1); FSinOsc.ar(sig * num, 0, 0.75) * 1/(num**3) }));
 	sig = Pan2.ar(sig, i_pan, 1) * env;
 	sig = sig * amp;
 	Out.ar(bus1, sig);
