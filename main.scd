@@ -33,6 +33,11 @@ addPrecadentialBeats = {
 
 },
 
+
+// check if the minimum required number of beats
+// have been selected, the leading tone does not
+// fall on invalid, and whatever other requirements
+// are necessary for a proper cadence
 getIsTimeToCadence = {
 	arg leadingToneDegree = 0;
 	var prereq = (
@@ -48,6 +53,8 @@ getIsTimeToCadence = {
 	)[~voiceOrder].value();
 },
 
+// adds beats one by one, ending when a cadence symbol
+// has been pushed into the array of beats
 createBeats = {
 	while({
 		~beatNtvls.size < 40 and:
@@ -74,6 +81,8 @@ createBeats = {
 		);
 	});
 },
+// gets the relative starting pitches for each voice
+// in its respective permutation
 getLastDegreeDict = {
 	arg degree = 0;
 	(
@@ -116,6 +125,9 @@ getLastDegreeDict = {
 	});
 	melody;
 };
+
+// picks an ornamentation for each interval,
+// and replaces the cadence symbol with the cadence phrase
 ~tailorMelody = {
 	arg melody = [], voiceNum = 1;
 	var cadenceString,
@@ -134,6 +146,8 @@ getLastDegreeDict = {
 	melody.flatten;
 };
 
+
+// runs a canon and pauses for a few beats
 ~canonAndPause = {
 	arg voiceOrder = 'MHL';
 	var melody, createVoice, lastDegreeDict;
