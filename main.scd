@@ -12,6 +12,7 @@ getLeadingToneDegree = {
 		'MH': 1,
 		'ML': 2,
 		'MHL': 3,
+		'HLM': 1,
 		'MLH': 0
 	)[~voiceOrder];
 	(~netDegrees + leadingToneDistance) % 7;
@@ -27,6 +28,7 @@ addPrecadentialBeats = {
 		'MH': [ -1 ],
 		'ML': [ 1 ],
 		'MHL': [ 2, -1 ],
+		'HLM': [ 2, -3 ],
 		'MLH': [ -2, 1 ]
 	)[~voiceOrder];
 	~beatNtvls = ~beatNtvls.addAll(beatsToAdd);
@@ -49,6 +51,7 @@ getIsTimeToCadence = {
 		'MH': prereq,
 		'ML': prereq,
 		'MHL': prereq.and(~ntvlOpts.find([ [ 2, 1 ] ]) !== nil ),
+		'HLM': prereq.and(~ntvlOpts.find([ [ 2, 1 ] ]) !== nil ),
 		'MLH': prereq.and(~ntvlOpts.find([ [ -2, 1 ] ]) !== nil )
 	)[~voiceOrder].value();
 },
@@ -91,6 +94,11 @@ getLastDegreeDict = {
 			2: degree + 4,
 			3: degree - 3
 		),
+		'HLM': (
+			1: degree,
+			2: degree - 7,
+			3: degree - 3
+		),
 		'MH': (
 			1: degree,
 			2: degree + 4
@@ -113,6 +121,7 @@ getLastDegreeDict = {
 ~ntvlSets = (
 	'MH': [ -3, -1, 0, 2, 4 ],
 	'MHL': [ -3, 0, 2, 4 ],
+	'HLM': [ -3, 0, 2, 4 ],
 	'ML': [ 3, 1, 0, -2, -4 ],
 	'MLH': [ 3, 0, -2, -4 ]
 );
@@ -154,7 +163,7 @@ getLastDegreeDict = {
 	var root = 0;
 	var octave, degree;
 	~voiceOrder = voiceOrder.postln;
-	if (['MLH','ML'].includes(~voiceOrder),
+	if (['MLH','ML', 'HLM'].includes(~voiceOrder),
 		{
 			octave = 5;
 			degree = (-3..2).choose;
@@ -219,7 +228,6 @@ SynthDef(\simple, {
 
 SynthDef(\reverb, {
 	var sig, sig1, sig2;
-	bus1.postln;
 	sig1 = In.ar(bus1, 1);
 	sig2 = In.ar(bus2, 1);
 	sig = FreeVerb2.ar(sig1, sig2, 0.1, 0.9, 0.9);
@@ -234,5 +242,6 @@ Task({ {
 	~canonAndPause.value('MHL');
 	~canonAndPause.value('ML');
 	~canonAndPause.value('MLH');
+	~canonAndPause.value('HLM');
 }.loop; }).start;
 )

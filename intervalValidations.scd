@@ -16,6 +16,10 @@ isLastNtvlsNotMatching = { arg ntvls = [];
 };
 ~getNtvlOpts = {
 	arg voiceOrder = 'MHL';
+	if (voiceOrder === 'HLM',
+		{ voiceOrder = 'MHL' },
+		{}
+	);
 	~ntvlOpts = [];
 	~ntvlValidations[voiceOrder].do({ |func| func.value() });
 };
