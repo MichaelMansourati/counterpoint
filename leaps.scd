@@ -1,4 +1,5 @@
 (
+// invert fifth above ornamentation options to be used for fifth below cadences
 var invertOptions = {
 	arg opts = [ [ [ 0, 0 ] ] ];
 	opts.collectCopy({
@@ -10,6 +11,7 @@ var invertOptions = {
 	});
 	opts;
 },
+// clone an intervalOptions array on every level so that it can be reused
 deepCloneArray = {
 	arg options = [ [ [ 0, 0 ] ] ];
 	options.collectCopy({ |i| i.collectCopy({ |i| i.collectCopy({ |i| i }) }) });
