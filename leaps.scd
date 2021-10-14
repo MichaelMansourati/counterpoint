@@ -91,6 +91,7 @@ deepCloneArray = {
 
 ~leaps[\cadence2HLM] = deepCloneArray.value(~leaps[\cadence2MH]);
 ~leaps[\cadence2HLM][0][1][0] = 3;
+~leaps[\cadence2HLM][0][1][1] = 1;
 
 
 ~leaps[\cadence2ML] = ~leaps[\cadence2MH];
@@ -100,9 +101,9 @@ deepCloneArray = {
 ~leaps[\cadence2LHM] = "?????"; //this might break current implementation of cadencing
 
 // VOICE 3
-~leaps[\cadence3MHL] = [ [ [ 0, 1 ], [ -3, 1 ], [ 3, 4 ] ] ];
-~leaps[\cadence3MLH] = [ [ [ 0, 1 ], [ 1, 1 ], [ -1, 4 ] ] ];
-~leaps[\cadence3HLM] = [ [ [ 0, 1 ], [ -1, 1 ], [ -1, 4 ] ] ];
+~leaps[\cadence3MHL] = [ [ [ 0, 1 ], [ -3, 1 ], [ 3, 3 ] ] ];
+~leaps[\cadence3MLH] = [ [ [ 0, 1 ], [ 1, 1 ], [ -1, 3 ] ] ];
+~leaps[\cadence3HLM] = [ [ [ 0, 1 ], [ -1, 1 ], [ -1, 3 ] ] ];
 ~leaps[\cadence3LHM] = "?????"; //LHM is a special case
 
 ~leaps[\cadence] = [\cadence];
