@@ -228,7 +228,7 @@ SynthDef(\simple, {
 	sig = Pan2.ar(sig, i_pan, 1) * env;
 	sig = sig * amp;
 	sig = BPF.ar(sig, 130, 1.4);
-	Out.ar(bus, sig);
+	Out.ar(bus1, sig);
 }).add;
 
 SynthDef(\reverb, {
