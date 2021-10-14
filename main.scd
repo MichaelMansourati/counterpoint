@@ -233,9 +233,9 @@ SynthDef(\digiOrgan, {
 				Mix.new([
 					FSinOsc.ar(sig * num, 0, 0.75) * 1/(num**3),
 					LFSaw.ar(sig * num, 0, 0.09, 0) * 1/(num**3),
-					Crackle.ar(2, 0.15),
-					BrownNoise.ar(0.015),
-					PinkNoise.ar(0.025)
+					Crackle.ar(2, 0.1),
+					BrownNoise.ar(0.01),
+					PinkNoise.ar(0.01)
 				]);
 			}
 		)
@@ -250,7 +250,7 @@ SynthDef(\reverb, {
 	var sig, sig1, sig2;
 	sig1 = In.ar(bus1, 1);
 	sig2 = In.ar(bus2, 1);
-	sig = FreeVerb2.ar(sig1, sig2, 0.1, 0.9, 0.9);
+	sig = FreeVerb2.ar(sig1, sig2, 0.2, 0.8, 0.8);
 	Out.ar(0, sig);
 }).add;
 )
