@@ -188,7 +188,7 @@ getLastDegreeDict = {
 		var stepData = Pseq(~tailorMelody.value(melody, voiceNum), 1);
 		var pan = (voiceNum - 1)/(~voiceOrder.asString.size - 1) - 0.5;
 
-		Pmono(\simple,
+		Pmono(\digiOrgan,
 			\stepData, stepData,
 			\stepVelocity, Pkey(\stepData).collect({|e| e[0]}),
 			\degree, Pfunc({|event| event[\stepVelocity] + lastDegreeDict[voiceNum] }),
@@ -215,7 +215,7 @@ bus2.free;
 bus1 = Bus.audio(s, 1);
 bus2 = Bus.audio(s, 1);
 lag = 0.05;
-SynthDef(\simple, {
+SynthDef(\digiOrgan, {
 	arg freq = 100, i_pan = 0, gate = 1, amp = 1;
 	var sig, env;
 	env = EnvGen.ar(
