@@ -249,5 +249,4 @@ Task({ {
 	~canonAndPause.value('MLH');
 	~canonAndPause.value('HLM');
 }.loop; }).start;
-s.freqScope
 )
