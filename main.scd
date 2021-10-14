@@ -224,7 +224,22 @@ SynthDef(\simple, {
 		doneAction: Done.freeSelf
 	);
 	sig = Lag.kr(freq, lag);
-	sig = Mix.new(Array.fill(3, {|i| var num = (i+1); FSinOsc.ar(sig * num, 0, 0.75) * 1/(num**3) }));
+	sig = Mix.new(
+		Array.fill(
+			3,
+			{
+				|i|
+				var num = (i+1);
+				Mix.new([
+					FSinOsc.ar(sig * num, 0, 0.75) * 1/(num**3),
+					LFSaw.ar(sig * num, 0, 0.09, 0) * 1/(num**3),
+					Crackle.ar(2, 0.15),
+					BrownNoise.ar(0.015),
+					PinkNoise.ar(0.025)
+				]);
+			}
+		)
+	);
 	sig = Pan2.ar(sig, i_pan, 1) * env;
 	sig = sig * amp;
 	sig = BPF.ar(sig, 130, 1.4);
