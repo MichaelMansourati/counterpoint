@@ -50,7 +50,7 @@ deepCloneArray = {
 ~leaps[-4] = invertOptions.value(deepCloneArray.value(~leaps[4]));
 
 // VOICE 1
-~leaps[\cadence1MH] = [ [ [ 0, 0.5 ], [ 3, 1 ], [ -1, 0.5 ], [ 1, 2 ] ] ];
+~leaps[\cadence1MH] = [ [ [ 0, 0.5 ], [ 3, 1 ], [ -1, 0.5 ], [ 1, 1 ] ] ];
 
 ~leaps[\cadence1MHL] = ~leaps[\cadence1MH];
 
