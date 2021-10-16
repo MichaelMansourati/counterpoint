@@ -20,7 +20,7 @@ deepCloneArray = {
 ~leaps = ();
 ~leaps[-3] = [
 	[ [ 0, 1 ], [ -3, 0 ] ],
-	[ [ 0, 0.5 ], [ -1, 0.5 ], [ -2, 0 ] ],
+	[ [ 0, 0.5 ], [ -2, 0.5 ], [ -1, 0 ] ],
 	[ [ 0, 0.5 ], [ -1, 0.25 ], [ -1, 0.25 ], [ -1, 0 ] ],
 	[ [ 0, 0.75 ], [ -1, 0.25 ], [ -2, 0 ] ],
 	[ [ 0, 0.75 ], [ -1, 0.125 ], [ -1, 0.125 ], [ -1,  0] ],
@@ -44,7 +44,6 @@ deepCloneArray = {
 ];
 
 ~leaps[3] = invertOptions.value(deepCloneArray.value(~leaps[-3]));
-~leaps[3][1] = [ [ 0, 0.5 ], [ 2, 0.5 ], [ 1, 0 ] ];
 ~leaps[1] = invertOptions.value(deepCloneArray.value(~leaps[-1]));
 ~leaps[-2] = invertOptions.value(deepCloneArray.value(~leaps[2]));
 ~leaps[-4] = invertOptions.value(deepCloneArray.value(~leaps[4]));
