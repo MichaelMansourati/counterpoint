@@ -231,18 +231,17 @@ SynthDef(\digiOrgan, {
 				|i|
 				var num = (i+1);
 				Mix.new([
-					FSinOsc.ar(sig * num, 0, 0.75) * 1/(num**3),
-					LFSaw.ar(sig * num, 0, 0.09, 0) * 1/(num**3),
-					Crackle.ar(2, 0.1),
-					BrownNoise.ar(0.01),
-					PinkNoise.ar(0.01)
+					RLPF.ar(FSinOsc.ar(sig * num, 0, 0.75) * 1/(num**3), 600, 1),
+					RLPF.ar(LFSaw.ar(sig * num, 0, 0.09, 0) * 1/(num**3), 600, 1),
+					Crackle.ar(2, 0.025),
+					BrownNoise.ar(0.006),
+					PinkNoise.ar(0.006)
 				]);
 			}
 		)
 	);
 	sig = Pan2.ar(sig, i_pan, 1) * env;
 	sig = sig * amp;
-	sig = BPF.ar(sig, 130, 1.4);
 	Out.ar(bus1, sig);
 }).add;
 
